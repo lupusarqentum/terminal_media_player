@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import cv2
+import numpy
 
 def find_size_to_fit(old_rows, old_columns, max_rows, max_columns):
     """Finds new size of the image so that it fits given maximum size.
@@ -27,10 +28,32 @@ def find_size_to_fit(old_rows, old_columns, max_rows, max_columns):
     new_columns = max(round(new_columns), 1)
     return (new_columns, new_rows)
 
+ASCII_CHARACTERS = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
+def asciify_grayscale(grayscale):
+    """Converts a grayscale of an image to ASCII image.
+    
+    Args:
+        grayscale: A matrix of integers from 0 to 255 (gray intensity).
+    
+    Returns:
+        A matrix of ASCII characters. 
+    """
+    def asciify_pixel(intensity):
+        pos = min(round(intensity / 255 * len(ASCII_CHARACTERS)), len(ASCII_CHARACTERS) - 1)
+        return ASCII_CHARACTERS[pos]
+    vectorized = numpy.vectorize(asciify_pixel)
+    return vectorized(grayscale)
+
 input_file_name = "examples/input.png"
 output_file_name = "examples/output.png"
 
 input_image = cv2.imread(input_file_name)
 new_size = find_size_to_fit(input_image.shape[0], input_image.shape[1], 55, 238)
-output_image = cv2.resize(input_image, new_size)
-cv2.imwrite(output_file_name, output_image)
+resized_image = cv2.resize(input_image, new_size)
+grayscale = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
+output_image = asciify_grayscale(grayscale)
+for i in range(output_image.shape[0]):
+    for j in range(output_image.shape[1]):
+        print(output_image[i, j], end="")
+    print("")
+cv2.imwrite(output_file_name, grayscale)
