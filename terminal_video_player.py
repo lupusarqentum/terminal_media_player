@@ -4,12 +4,18 @@ import cv2
 import numpy
 import os
 
-ASCII_CHARACTERS_GRAYSCALE = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
 CHARACTER_ASPECT_RATIO = 2.25
 TERMINAL_ROWS = None
 TERMINAL_COLUMNS = None
-POLARIZATION_LEVEL = 0.33
-COLORED_ASCII = True
+
+ASCII_CHARACTERS_GRAYSCALE = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
+#ASCII_CHARACTERS_GRAYSCALE = ".-:=!)[itCZ#3hX8%DRW"
+POLARIZATION_LEVEL = 0.0
+
+ENABLE_COLORFUL_BACK = True
+ENABLE_COLORFUL_CHARSET = True
+BACK_COLOR_OFFSET = 0
+CHARSET_COLOR_OFFSET = 160
 
 def find_ASCII_image_size(image_height, image_width, terminal_rows, terminal_columns, character_aspect_ratio):
     """Finds ASCII image size that fits terminal size and keeps pixel aspect ratio.
@@ -70,6 +76,7 @@ def asciify_grayscale(grayscale):
     """
     def asciify_pixel(intensity):
         pos = min(round(intensity / 255 * len(ASCII_CHARACTERS_GRAYSCALE)), len(ASCII_CHARACTERS_GRAYSCALE) - 1)
+        #return ASCII_CHARACTERS_GRAYSCALE[intensity]
         return ASCII_CHARACTERS_GRAYSCALE[pos]
     vectorized = numpy.vectorize(asciify_pixel)
     return vectorized(grayscale)
@@ -118,8 +125,21 @@ def colorize_ascii_image(ascii_image, source_image):
     result = numpy.zeros(ascii_image.shape, dtype="object")
     for i in range(ascii_image.shape[0]):
         for j in range(ascii_image.shape[1]):
-            result[i, j] = "\033[38;5;" + str(identify_color(source_image[i, j])) + \
-                           "m" + ascii_image[i, j] + "\033[39m"
+            buffer = []
+            if j == 0 and ENABLE_COLORFUL_CHARSET == False:
+                buffer.append("\033[38;5;7m")
+            elif ENABLE_COLORFUL_CHARSET:
+                fore_color = str(identify_color(source_image[i, j] + CHARSET_COLOR_OFFSET))
+                buffer.append("\033[38;5;" + fore_color + "m")
+            if ENABLE_COLORFUL_BACK:
+                back_color = str(identify_color(source_image[i, j] + BACK_COLOR_OFFSET))
+                buffer.append("\033[48;5;" + back_color + "m")
+            buffer.append(ascii_image[i, j])
+            if j == ascii_image.shape[1] - 1:
+                buffer.append("\033[39m");
+                if ENABLE_COLORFUL_BACK:
+                    buffer.append("\033[49m")
+            result[i, j] = "".join(buffer)
     return result
 
 def get_terminal_size():
@@ -154,15 +174,13 @@ output_file_name = "examples/output.png"
 
 TERMINAL_ROWS, TERMINAL_COLUMNS = get_terminal_size()
 
+print('\033[49m')
+
 input_image = cv2.imread(input_file_name)
 new_size = find_ASCII_image_size(input_image.shape[0], input_image.shape[1], TERMINAL_ROWS, TERMINAL_COLUMNS, CHARACTER_ASPECT_RATIO)
 resized_image = cv2.resize(input_image, new_size)
 grayscale = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
 polarized_grayscale = polarize_grayscale(grayscale, POLARIZATION_LEVEL)
 ascii_image = asciify_grayscale(polarized_grayscale)
-if COLORED_ASCII:
-    output_image = colorize_ascii_image(ascii_image, resized_image)
-else:
-    output_image = ascii_image
+output_image = colorize_ascii_image(ascii_image, resized_image)
 display_ascii_image(output_image, TERMINAL_COLUMNS)
-cv2.imwrite(output_file_name, polarized_grayscale)
