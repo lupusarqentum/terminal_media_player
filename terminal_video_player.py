@@ -105,7 +105,6 @@ def colorize_ascii_image(ascii_image, source_image):
     
     Returns:
         A matrix containing python strings. Each string is a combination of escape sequences and ASCII character.
-    
     """
     def identify_color(pixel):
         is_shade_of_gray = max(pixel) - min(pixel) < 15
@@ -124,8 +123,31 @@ def colorize_ascii_image(ascii_image, source_image):
     return result
 
 def get_terminal_size():
+    """Findss terminal size.
+    
+    Returns:
+        a tuple of integers (rows, columns) -- terminal size.
+    """
     rows, columns = os.popen("stty size", "r").read().split()
     return int(rows), int(columns)
+
+def display_ascii_image(ascii_image, terminal_columns):
+    """Prints an ASCII image to stdout centered horizontally.
+    
+    Args:
+        ascii_image: An ASCII image to print. Must be a matrix of strings.
+            Each string must contain exactly one printable character.
+        terminal_columns: A size of the terminal in columns.
+    
+    Returns:
+        None.
+    """
+    columns_used = ascii_image.shape[1]
+    offset_length = (terminal_columns - columns_used) // 2
+    offset = " " * offset_length
+    for i in range(ascii_image.shape[0]):
+        print(offset, end="")
+        print("".join(ascii_image[i]))
 
 input_file_name = "examples/input.png"
 output_file_name = "examples/output.png"
@@ -142,8 +164,5 @@ if COLORED_ASCII:
     output_image = colorize_ascii_image(ascii_image, resized_image)
 else:
     output_image = ascii_image
-for i in range(output_image.shape[0]):
-    for j in range(output_image.shape[1]):
-        print(output_image[i, j], end="")
-    print("")
+display_ascii_image(output_image, TERMINAL_COLUMNS)
 cv2.imwrite(output_file_name, polarized_grayscale)
