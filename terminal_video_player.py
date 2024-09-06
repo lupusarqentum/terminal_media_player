@@ -2,11 +2,12 @@
 
 import cv2
 import numpy
+import os
 
 ASCII_CHARACTERS_GRAYSCALE = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
 CHARACTER_ASPECT_RATIO = 2.25
-TERMINAL_ROWS = 55
-TERMINAL_COLUMNS = 238
+TERMINAL_ROWS = None
+TERMINAL_COLUMNS = None
 POLARIZATION_LEVEL = 0.33
 COLORED_ASCII = True
 
@@ -115,15 +116,21 @@ def colorize_ascii_image(ascii_image, source_image):
             g = max(int(pixel[1]) - 95, -1) // 40 + 1
             r = max(int(pixel[2]) - 95, -1) // 40 + 1
             return 16 + 36 * r + 6 * g + b
-    result = numpy.zeros(ascii_image.shape, dtype='object')
+    result = numpy.zeros(ascii_image.shape, dtype="object")
     for i in range(ascii_image.shape[0]):
         for j in range(ascii_image.shape[1]):
             result[i, j] = "\033[38;5;" + str(identify_color(source_image[i, j])) + \
                            "m" + ascii_image[i, j] + "\033[39m"
     return result
 
+def get_terminal_size():
+    rows, columns = os.popen("stty size", "r").read().split()
+    return int(rows), int(columns)
+
 input_file_name = "examples/input.png"
 output_file_name = "examples/output.png"
+
+TERMINAL_ROWS, TERMINAL_COLUMNS = get_terminal_size()
 
 input_image = cv2.imread(input_file_name)
 new_size = find_ASCII_image_size(input_image.shape[0], input_image.shape[1], TERMINAL_ROWS, TERMINAL_COLUMNS, CHARACTER_ASPECT_RATIO)
