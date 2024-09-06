@@ -8,6 +8,7 @@ CHARACTER_ASPECT_RATIO = 2.25
 TERMINAL_ROWS = 55
 TERMINAL_COLUMNS = 238
 POLARIZATION_LEVEL = 0.33
+COLORED_ASCII = True
 
 def find_ASCII_image_size(image_height, image_width, terminal_rows, terminal_columns, character_aspect_ratio):
     """Finds ASCII image size that fits terminal size and keeps pixel aspect ratio.
@@ -90,6 +91,37 @@ def polarize_grayscale(grayscale, polarization_level):
     multiplier = 127 / average_intensity * polarization_level
     return cv2.addWeighted(grayscale, multiplier, grayscale, 1.0 - polarization_level, 0.0)
 
+def colorize_ascii_image(ascii_image, source_image):
+    """Gives every ASCII image character a color.
+    
+    Assigns each ASCII image character one of the 240 colors via ANSI escape sequences.
+    16 colors are not used because their value highly depends on the specific terminal.
+    Assigned color is determined based on the color of the corresponding pixel in source_image.
+    
+    Args:
+        ascii_image: A matrix of ASCII characters.
+        source_image: An image. Must be the same shape as the ascii_image.
+    
+    Returns:
+        A matrix containing python strings. Each string is a combination of escape sequences and ASCII character.
+    
+    """
+    def identify_color(pixel):
+        is_shade_of_gray = max(pixel) - min(pixel) < 15
+        if is_shade_of_gray:
+            return 232 + numpy.clip((int(pixel[0]) - 8) // 10, 0, 23)
+        else:
+            b = max(int(pixel[0]) - 95, -1) // 40 + 1
+            g = max(int(pixel[1]) - 95, -1) // 40 + 1
+            r = max(int(pixel[2]) - 95, -1) // 40 + 1
+            return 16 + 36 * r + 6 * g + b
+    result = numpy.zeros(ascii_image.shape, dtype='object')
+    for i in range(ascii_image.shape[0]):
+        for j in range(ascii_image.shape[1]):
+            result[i, j] = "\033[38;5;" + str(identify_color(source_image[i, j])) + \
+                           "m" + ascii_image[i, j] + "\033[39m"
+    return result
+
 input_file_name = "examples/input.png"
 output_file_name = "examples/output.png"
 
@@ -98,7 +130,11 @@ new_size = find_ASCII_image_size(input_image.shape[0], input_image.shape[1], TER
 resized_image = cv2.resize(input_image, new_size)
 grayscale = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
 polarized_grayscale = polarize_grayscale(grayscale, POLARIZATION_LEVEL)
-output_image = asciify_grayscale(polarized_grayscale)
+ascii_image = asciify_grayscale(polarized_grayscale)
+if COLORED_ASCII:
+    output_image = colorize_ascii_image(ascii_image, resized_image)
+else:
+    output_image = ascii_image
 for i in range(output_image.shape[0]):
     for j in range(output_image.shape[1]):
         print(output_image[i, j], end="")
