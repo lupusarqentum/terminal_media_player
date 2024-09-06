@@ -3,10 +3,11 @@
 import cv2
 import numpy
 
+ASCII_CHARACTERS_GRAYSCALE = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
 CHARACTER_ASPECT_RATIO = 2.25
 TERMINAL_ROWS = 55
 TERMINAL_COLUMNS = 238
-ASCII_CHARACTERS_GRAYSCALE = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
+POLARIZATION_LEVEL = 0.33
 
 def find_ASCII_image_size(image_height, image_width, terminal_rows, terminal_columns, character_aspect_ratio):
     """Finds ASCII image size that fits terminal size and keeps pixel aspect ratio.
@@ -71,6 +72,24 @@ def asciify_grayscale(grayscale):
     vectorized = numpy.vectorize(asciify_pixel)
     return vectorized(grayscale)
 
+def polarize_grayscale(grayscale, polarization_level):
+    """Pushes dark areas of an image darker and light areas lighter.
+    
+    Args:
+        grayscale: A matrix of integers from 0 to 255 (gray intensity).
+        polarization_level: A float number from 0.0 to 1.0 controlling how aggressively
+            polarization should happen. For example, 0.0 value means nothing will happen at all,
+            while 1.0 value means very aggressive polarization.
+    
+    Returns:
+        A new matrix of integers from 0 to 255 (gray intensity of polarized grayscale).
+    """
+    if polarization_level == 0.0:
+        return grayscale
+    average_intensity = numpy.average(grayscale)
+    multiplier = 127 / average_intensity * polarization_level
+    return cv2.addWeighted(grayscale, multiplier, grayscale, 1.0 - polarization_level, 0.0)
+
 input_file_name = "examples/input.png"
 output_file_name = "examples/output.png"
 
@@ -78,9 +97,10 @@ input_image = cv2.imread(input_file_name)
 new_size = find_ASCII_image_size(input_image.shape[0], input_image.shape[1], TERMINAL_ROWS, TERMINAL_COLUMNS, CHARACTER_ASPECT_RATIO)
 resized_image = cv2.resize(input_image, new_size)
 grayscale = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
-output_image = asciify_grayscale(grayscale)
+polarized_grayscale = polarize_grayscale(grayscale, POLARIZATION_LEVEL)
+output_image = asciify_grayscale(polarized_grayscale)
 for i in range(output_image.shape[0]):
     for j in range(output_image.shape[1]):
         print(output_image[i, j], end="")
     print("")
-cv2.imwrite(output_file_name, grayscale)
+cv2.imwrite(output_file_name, polarized_grayscale)
