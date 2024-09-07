@@ -1,3 +1,5 @@
 venv/
 examples/
 **/__pycache__
+error.log
+
