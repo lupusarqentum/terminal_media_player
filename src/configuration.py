@@ -16,6 +16,7 @@ class Configuration:
         self._colorful_background_enabled = False
         self._colorful_charset_enabled = True
         self._audio_enabled = True
+        self._boldify = True
         self._background_color_offset = 0
         self._charset_color_offset = 0
     
@@ -42,6 +43,7 @@ class Configuration:
             colorful_background_enabled = data["colorful_background_enabled"]
             colorful_charset_enabled = data["colorful_charset_enabled"]
             audio_enabled = data["audio_enabled"]
+            boldify = data["boldify"]
             background_color_offset = data["background_color_offset"]
             charset_color_offset = data["charset_color_offset"]
         except KeyError:
@@ -55,6 +57,7 @@ class Configuration:
             assert type(colorful_background_enabled) == bool
             assert type(colorful_charset_enabled) == bool
             assert type(audio_enabled) == bool
+            assert type(boldify) == bool
             assert type(background_color_offset) == int and 0 <= background_color_offset <= 255
             assert type(charset_color_offset) == int and 0 <= charset_color_offset <= 255
         except AssertionError:
@@ -67,6 +70,7 @@ class Configuration:
         self._colorful_background_enabled == colorful_background_enabled
         self._colorful_charset_enabled = colorful_charset_enabled;
         self._audio_enabled = audio_enabled
+        self._boldify = boldify
         self._background_color_offset = background_color_offset
         self._charset_color_offset = charset_color_offset
 
@@ -90,6 +94,9 @@ class Configuration:
     def get_audio_enabled(self) -> bool:
         return self_audio_enabled
     
+    def get_boldify(self) -> bool:
+        return self._boldify
+
     def get_background_color_offset(self) -> int:
         return self._background_color_offset
     

@@ -32,4 +32,10 @@ terminal_rows, terminal_columns = get_terminal_size()
 image_processor = ImageProcessor(config)
 image_processor.load(target_file_path)
 image_processor.render(terminal_rows, terminal_columns)
-image_processor.display()
+
+if config.get_boldify():
+    print("\033[1m")
+    image_processor.display()
+    print("\033[0m")
+else:
+    image_processor.display()
