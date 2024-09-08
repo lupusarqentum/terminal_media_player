@@ -1,3 +1,20 @@
+# TerminalVideoPlayer, a program using command line interface to play videos.
+# Copyright (C) 2024  Roman Lisov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see
+# https://www.gnu.org/licenses/gpl-3.0.html
+
 import json
 from string import printable
 
@@ -48,7 +65,7 @@ class Configuration:
 
         if not ((self._is_character_aspect_ratio(character_aspect_ratio)) and
                 (self._is_ascii_grayscale(ascii_characters_grayscale)) and
-                (self._is_polarization_level(polarization_level)) and
+                (self._is_polarization_level_value(polarization_level)) and
                 (type(colorful_background_enabled) is bool) and
                 (type(colorful_charset_enabled) is bool) and
                 (type(audio_enabled) is bool) and
@@ -73,7 +90,7 @@ class Configuration:
     def _is_character_aspect_ratio(self, value) -> bool:
         return type(value) is float and value > 0
 
-    def _is_polarization_value(self, value) -> bool:
+    def _is_polarization_level_value(self, value) -> bool:
         return type(value) is float and -0.001 <= value <= 1.001
 
     def _is_ascii_grayscale(self, value) -> bool:

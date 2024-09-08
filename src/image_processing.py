@@ -1,3 +1,20 @@
+# TerminalVideoPlayer, a program using command line interface to play videos.
+# Copyright (C) 2024  Roman Lisov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see
+# https://www.gnu.org/licenses/gpl-3.0.html
+
 import numpy
 import cv2
 
@@ -62,7 +79,7 @@ class ImageProcessor:
         character_aspect_ratio = self._config.get_character_aspect_ratio()
         polarization_level = self._config.get_polarization_level()
         ascii_grayscale = self._config.get_ascii_characters_grayscale()
-        charset_offset = self._config_get_charset_color_offset()
+        charset_offset = self._config.get_charset_color_offset()
         background_offset = self._config.get_background_color_offset()
         source_shape = self._source_image.shape
 
@@ -207,8 +224,8 @@ def colorize_ascii_image_characters(ascii_image: numpy.ndarray,
     source_offset = source_image + color_offset
     for i in range(ascii_image.shape[0]):
         for j in range(ascii_image.shape[1]):
-            fore_color_sequence = find_escape_sequence(source_offset, True)
-            result[i, j] = fore_color_sequence + ascii_image[i, j]
+            color_sequence = find_escape_sequence(source_offset[i, j], True)
+            result[i, j] = color_sequence + ascii_image[i, j]
     result[ascii_image.shape[0] - 1, ascii_image.shape[1] - 1] += "\033[39m"
     return result
 
@@ -234,8 +251,8 @@ def colorize_ascii_image_background(ascii_image: numpy.ndarray,
     source_offset = source_image + color_offset
     for i in range(ascii_image.shape[0]):
         for j in range(ascii_image.shape[1]):
-            back_color_sequence = find_escape_sequence(source_offset, False)
-            result[i, j] = back_color_sequence + ascii_image[i, j]
+            color_sequence = find_escape_sequence(source_offset[i, j], False)
+            result[i, j] = color_sequence + ascii_image[i, j]
     for i in range(ascii_image.shape[0]):
         result[i, ascii_image.shape[1] - 1] += "\033[49m"
     return result
