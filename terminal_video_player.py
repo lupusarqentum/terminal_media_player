@@ -39,3 +39,4 @@ if config.get_boldify():
     print("\033[0m")
 else:
     image_processor.display()
+

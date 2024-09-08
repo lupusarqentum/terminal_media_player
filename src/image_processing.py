@@ -5,23 +5,85 @@ from src.configuration import Configuration
 
 
 class ImageProcessor:
-    """
+    """Processor capable of rendering and displaying image.
+
+    Displaying an image typically consists of three steps.
+    Firstly, any image must be loaded into memory from file.
+    Secondly, an image must be rendered into ASCII characters.
+    Thirdly, a rendered image must be printed to the stdout.
+    Each step is represented by a separate method.
+    Each method might be called several times if needed.
+    For example, you might re-call render() to rerender image with different parameters.
+    Or, you could call display() method several times to display an image several times even if it was rendered just once.
+
+    Methods defined here:
+
+    __init__(self, config, /)
+        Initializes an image processor with the provided config file.
+
+    load(self, target_file_path, /)
+        Parses and loads an image stored in the file target_file_path into RAM.
+
+    render(self, terminal_rows, terminal_columns, /)
+        Renders previously loaded image.
+
+    display(self, /)
+        Print previously loaded image to stdout.
     """
     
     def __init__(self, config: Configuration) -> None:
+        """Initializes self.
+
+        Initializes image processor by passing configuration object.
+        Config is used to alter rendering process by configuring it.
+
+        Parameters:
+            config: A Configuration instance.
+
+        Returns:
+            None.
+        """
         self._config = config
         self._hasLoaded = False
         self._hasRendered = False
     
     def load(self, target_file_path: str) -> None:
+        """Receives file path to the target image and loads it into memory.
+
+        Parameters:
+            target_file_path: Path to the image to be loaded.
+
+        Returns:
+            None.
+
+        Raises:
+            IOError: If failed to read an image.
+        """
         self._source_image = cv2.imread(target_file_path)
         if self._source_image is None:
-            raise FileNotFoundError("Can't find an image to load: " + target_file_path)
+            raise IOError("Failed to read an image: " + target_file_path)
         self._hasLoaded = True
         self._hasRendered = False
     
     def render(self, terminal_rows: int, terminal_columns: int) -> None:
-        assert self._hasLoaded
+        """Renders an image.
+
+        Renders an image that was previously loaded with the load method.
+        Image will be rendered, but not displayed.
+        Number of rows and columns must be supplied to render image to correct size.
+
+        Parameters:
+            terminal_rows: Number of rows in a rendered image.
+            terminal_columns: Number of columns in a rendered image.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: If no image was previously loaded with the load method.
+        """
+        if not self._hasLoaded:
+            raise ValueError("Can't render an image because no image was loaded")
         character_aspect_ratio = self._config.get_character_aspect_ratio()
         source_shape = self._source_image.shape
         new_size = find_ASCII_image_size(source_shape[0], source_shape[1], terminal_rows, terminal_columns, character_aspect_ratio)
@@ -38,7 +100,18 @@ class ImageProcessor:
         self._hasRendered = True
     
     def display(self) -> None:
-        assert self._hasRendered
+        """Displays rendered image.
+
+        Displays an image. An image has to be rendered before displaying.
+
+        Returns:
+            None.
+
+        Raises:
+            ValueError: If no image was previously rendered.
+        """
+        if not self._hasRendered:
+            raise ValueError("Can't display an image because no image was rendered")
         display_ascii_image(self._rendered_image, self._terminal_columns)
 
 
