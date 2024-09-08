@@ -9,14 +9,18 @@ from src.utils import print_error, print_warn, get_terminal_size
 if __name__ == "__main__":
     CONFIG_LOCATION_PREFIX = "./"
     config = Configuration()
-    if not config.read_and_apply_JSON_config(CONFIG_LOCATION_PREFIX + "config.json"):
-        print_error("An error occurred when trying to apply config. Fallback to default config instead")
-        if not config.read_and_apply_JSON_config(CONFIG_LOCATION_PREFIX + "default_config.json"):
-            print_error("An error occurred when trying to apply default config. Can't operate")
+    config_location = CONFIG_LOCATION_PREFIX + "config.json"
+    if not config.read_and_apply_JSON_config(config_location):
+        print_error("An error occurred when trying to apply config. \
+Fallback to default config instead")
+        if not config.read_and_apply_JSON_config(config_location):
+            print_error("An error occurred when trying to apply \
+default config. Can't operate")
             sys.exit(-1)
 
     if len(sys.argv) < 2:
-        print_warn("No input file path was provided. Assuming examples/input.png")
+        print_warn("No input file path was provided. \
+Assuming examples/input.png")
         target_file_path = "examples/input.png"
     else:
         target_file_path = sys.argv[1]
@@ -34,4 +38,3 @@ if __name__ == "__main__":
         print("\033[0m")
     else:
         image_processor.display()
-

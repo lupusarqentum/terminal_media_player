@@ -13,10 +13,12 @@ class ImageProcessor:
     Thirdly, a rendered image must be printed to the stdout.
     Each step is represented by a separate method.
     Each method might be called several times if needed.
-    For example, you might re-call render() to rerender image with different parameters.
-    Or, you could call display() method several times to display an image several times even if it was rendered just once.
+    For example, you might re-call render()
+        to rerender image with different parameters.
+    For another one, you could call display() method several times
+        to display an image several times even if it was rendered just once.
     """
-    
+
     def __init__(self, config: Configuration) -> None:
         """Initializes self.
 
@@ -26,7 +28,7 @@ class ImageProcessor:
         self._config = config
         self._hasLoaded = False
         self._hasRendered = False
-    
+
     def load(self, target_file_path: str) -> None:
         """Receives file path to the target image and loads it into memory.
 
@@ -38,38 +40,52 @@ class ImageProcessor:
             raise IOError("Failed to read an image: " + target_file_path)
         self._hasLoaded = True
         self._hasRendered = False
-    
+
     def render(self, terminal_rows: int, terminal_columns: int) -> None:
         """Renders an image.
 
-        Renders an image that was previously loaded with the load method.
+        Renders an image that was loaded with the load method.
         Image will be rendered, but not displayed.
-        Number of rows and columns must be supplied to render image to correct size.
+        Number of rows and columns must be given
+            to render image with correct size.
 
         Parameters:
             terminal_rows: Number of rows in a rendered image.
             terminal_columns: Number of columns in a rendered image.
 
         Raises:
-            ValueError: If no image was previously loaded with the load method.
+            ValueError: If no image was loaded with the load method.
         """
         if not self._hasLoaded:
-            raise ValueError("Can't render an image because no image was loaded")
+            raise ValueError("Can't render an image: no image was loaded")
+
         character_aspect_ratio = self._config.get_character_aspect_ratio()
+        polarization_level = self._config.get_polarization_level()
+        ascii_grayscale = self._config.get_ascii_characters_grayscale()
+        charset_offset = self._config_get_charset_color_offset()
+        background_offset = self._config.get_background_color_offset()
         source_shape = self._source_image.shape
-        new_size = find_ASCII_image_size(source_shape[0], source_shape[1], terminal_rows, terminal_columns, character_aspect_ratio)
+
+        new_size = find_ASCII_image_size(source_shape[0], source_shape[1],
+                                         terminal_rows, terminal_columns,
+                                         character_aspect_ratio)
+
         resized_image = cv2.resize(self._source_image, new_size)
         grayscale = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
-        polarized_grayscale = polarize_grayscale(grayscale, self._config.get_polarization_level())
-        ascii_image = asciify_grayscale(polarized_grayscale, self._config.get_ascii_characters_grayscale())
+        polarized_grayscale = polarize_grayscale(grayscale, polarization_level)
+        ascii_image = asciify_grayscale(polarized_grayscale, ascii_grayscale)
         if self._config.get_colorful_charset_enabled():
-            ascii_image = colorize_ascii_image_characters(ascii_image, resized_image, self._config.get_charset_color_offset())
+            ascii_image = colorize_ascii_image_characters(ascii_image,
+                                                          resized_image,
+                                                          charset_offset)
         if self._config.get_colorful_background_enabled():
-            ascii_image = colorize_ascii_image_background(ascii_image, resized_image, self._config.get_background_color_offset())
+            ascii_image = colorize_ascii_image_background(ascii_image,
+                                                          resized_image,
+                                                          background_offset)
         self._rendered_image = ascii_image
         self._terminal_columns = terminal_columns
         self._hasRendered = True
-    
+
     def display(self) -> None:
         """Displays rendered image.
 
@@ -77,25 +93,29 @@ class ImageProcessor:
             ValueError: If no image was previously rendered.
         """
         if not self._hasRendered:
-            raise ValueError("Can't display an image because no image was rendered")
+            raise ValueError("Can't display an image: no image was rendered")
         display_ascii_image(self._rendered_image, self._terminal_columns)
 
 
-def find_ASCII_image_size(image_height: int, image_width: int, terminal_rows: int, terminal_columns: int, character_aspect_ratio: float) -> tuple:
-    """Finds ASCII image size that fits terminal size and keeps pixel aspect ratio.
-    
-    Receives pixel size of an image and finds appropriate size to display ASCII art in terminal.
-    Found ASCII image size is in rows and columns. 
-    Number of terminal rows and columns is used to ensure that the size will fit the terminal.
-    Aspect ratio (in pixels) of ASCII image with found size will be the same as aspect ratio of source image.
-    
+def find_ASCII_image_size(image_height: int, image_width: int,
+                          terminal_rows: int, terminal_columns: int,
+                          character_aspect_ratio: float) -> tuple:
+    """Finds ASCII image size that fits terminal size and keeps aspect ratio.
+
+    Finds appropriate (columns, rows) size to display ASCII art in terminal
+        based on source image pixel (height, width) size.
+    Aspect ratio of ASCII image will be the same as aspect ratio of source.
+    To ensure keeping aspect ratio,
+        correct value of terminal characters' aspect ratio is needed.
+
     Parameters:
         image_height: Height of source image in pixels.
         image_width: Width of source image in pixels.
         terminal_rows: Maximum allowed number of rows.
         terminal_columns: Maximum allowed number of columns.
-        character_aspect_ratio: Aspect ratio of terminal characters (height / width)
-    
+        character_aspect_ratio: Aspect ratio of terminal characters
+            (height / width)
+
     Returns:
         A tuple containing rows and columns for a new size.
     """
@@ -107,43 +127,49 @@ def find_ASCII_image_size(image_height: int, image_width: int, terminal_rows: in
     return (new_columns, new_rows)
 
 
-def asciify_grayscale(grayscale: numpy.ndarray, ascii_characters_grayscale: str) -> numpy.ndarray:
+def asciify_grayscale(grayscale: numpy.ndarray,
+                      ascii_grayscale: str) -> numpy.ndarray:
     """Converts a grayscale of an image to ASCII image."""
+    grayscale_len = len(ascii_grayscale)
+
     def asciify_pixel(intensity):
-        pos = min(round(intensity / 255 * len(ascii_characters_grayscale)), len(ascii_characters_grayscale) - 1)
-        return ascii_characters_grayscale[pos]
+        pos = min(round(intensity / 255 * grayscale_len), grayscale_len - 1)
+        return ascii_grayscale[pos]
     vectorized = numpy.vectorize(asciify_pixel)
     return vectorized(grayscale)
 
 
-def polarize_grayscale(grayscale: numpy.ndarray, polarization_level: float) -> numpy.ndarray:
+def polarize_grayscale(grayscale: numpy.ndarray,
+                       polarization_level: float) -> numpy.ndarray:
     """Pushes dark areas of an image darker and light areas lighter.
-    
+
     Parameters:
         grayscale: A matrix of integers from 0 to 255 (gray intensity).
-        polarization_level: A float number from 0.0 to 1.0 controlling how aggressively
-            polarization should happen. For example, 0.0 value means nothing will happen at all,
+        polarization_level: A float number from 0.0 to 1.0
+            controlling how aggressively polarization should be performed.
+            For example, 0.0 value means nothing will happen at all,
             while 1.0 value means very aggressive polarization.
     """
     if polarization_level == 0.0:
         return grayscale
     average_intensity = numpy.average(grayscale)
     multiplier = 127 / average_intensity * polarization_level
-    return cv2.addWeighted(grayscale, multiplier, grayscale, 1.0 - polarization_level, 0.0)
+    return cv2.addWeighted(grayscale, multiplier,
+                           grayscale, 1.0 - polarization_level, 0.0)
 
 
-def convert_color_to_ansi_sequence(color: list, for_character: bool) -> str:
-    """Converts RGB color into ANSI escape sequence for character or background.
-    
+def find_escape_sequence(color: list, for_character: bool) -> str:
+    """Finds ANSI escape sequence best matching given BGR color.
+
     Finds one of 240 ANSI escape sequences that sets the best matching color.
-    16 possible ANSI escape sequences for color setting are ignored because their corresponding 
-    RGB values highly depend on a specific terminal.
-    
+    16 possible colors out of all 256 are not used
+        because their exact BGR values depend on a specific terminal used.
+
     Parameters:
-        color: An array-like object containing three integers from 0 to 255 representing BGR channels.
-        for_character: True, if ANSI escape sequence for character color setting is required,
+        color: A color.
+        for_character: True, if need to set color for foreground,
             and False if need to set color for background.
-    
+
     Returns:
         An ANSI escape sequence.
     """
@@ -160,54 +186,65 @@ def convert_color_to_ansi_sequence(color: list, for_character: bool) -> str:
     return beginning + str(color_number) + "m"
 
 
-def colorize_ascii_image_characters(ascii_image: numpy.ndarray, source_image: numpy.ndarray, color_offset: int) -> numpy.ndarray:
+def colorize_ascii_image_characters(ascii_image: numpy.ndarray,
+                                    source_image: numpy.ndarray,
+                                    color_offset: int) -> numpy.ndarray:
     """Gives every ASCII image character a foreground color.
-    
-    Assigns each ASCII image character a foreground color based on source_image color.
-    
+
+    Assigns each ASCII image character foreground color
+        based on source_image color.
+
     Parameters:
         ascii_image: A matrix of ASCII characters.
         source_image: An image. Must be the same shape as the ascii_image.
-        color_offset: A value that will be added to every channel of every character color.
-    
+        color_offset: A value to add to every color channel of foreground.
+
     Returns:
-        A matrix containing python strings. Each string is a combination of escape sequence and ASCII character.
+        An array of strings.
+            Each one is combination of escape sequences and a character.
     """
     result = numpy.zeros(ascii_image.shape, dtype="object")
+    source_offset = source_image + color_offset
     for i in range(ascii_image.shape[0]):
         for j in range(ascii_image.shape[1]):
-            fore_color_sequence = convert_color_to_ansi_sequence(source_image[i, j] + color_offset, True)
+            fore_color_sequence = find_escape_sequence(source_offset, True)
             result[i, j] = fore_color_sequence + ascii_image[i, j]
     result[ascii_image.shape[0] - 1, ascii_image.shape[1] - 1] += "\033[39m"
     return result
 
 
-def colorize_ascii_image_background(ascii_image: numpy.ndarray, source_image: numpy.ndarray, color_offset: int) -> numpy.ndarray:
+def colorize_ascii_image_background(ascii_image: numpy.ndarray,
+                                    source_image: numpy.ndarray,
+                                    color_offset: int) -> numpy.ndarray:
     """Gives every ASCII image character a background color.
-    
-    Assigns each ASCII image character a backround color based on source_image color.
-    
+
+    Assigns each ASCII image character backround color
+        based on source_image color.
+
     Parameters:
         ascii_image: A matrix of ASCII characters.
         source_image: An image. Must be the same shape as the ascii_image.
-        color_offset: A value that will be added to every channel of every character background.
-    
+        color_offset: A value to add to every color channel of background.
+
     Returns:
-        A matrix containing python strings. Each string is a combination of escape sequence and ASCII character.
+        An array of strings.
+            Each one is combination of escape sequences and a character.
     """
     result = numpy.zeros(ascii_image.shape, dtype="object")
+    source_offset = source_image + color_offset
     for i in range(ascii_image.shape[0]):
         for j in range(ascii_image.shape[1]):
-            back_color_sequence = convert_color_to_ansi_sequence(source_image[i, j] + color_offset, False)
+            back_color_sequence = find_escape_sequence(source_offset, False)
             result[i, j] = back_color_sequence + ascii_image[i, j]
     for i in range(ascii_image.shape[0]):
         result[i, ascii_image.shape[1] - 1] += "\033[49m"
     return result
 
 
-def display_ascii_image(ascii_image: numpy.ndarray, terminal_columns: int) -> None:
+def display_ascii_image(ascii_image: numpy.ndarray,
+                        terminal_columns: int) -> None:
     """Prints an ASCII image to stdout centered horizontally.
-    
+
     Parameters:
         ascii_image: An ASCII image to print. Must be a matrix of strings.
             Each string must contain exactly one printable character.
@@ -219,5 +256,3 @@ def display_ascii_image(ascii_image: numpy.ndarray, terminal_columns: int) -> No
     for i in range(ascii_image.shape[0]):
         print(offset, end="")
         print("".join(ascii_image[i]))
-
-
