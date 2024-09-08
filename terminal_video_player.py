@@ -1,18 +1,10 @@
 #!/usr/bin/env python3
 
-import os
 import sys
 
 from src.configuration import Configuration
 from src.image_processing import ImageProcessor
-from src.utils import print_error, print_warn
-
-
-def get_terminal_size() -> tuple:
-    """Finds terminal size and returns it as a tuple (rows, columns)."""
-    rows, columns = os.popen("stty size", "r").read().split()
-    return int(rows), int(columns)
-
+from src.utils import print_error, print_warn, get_terminal_size
 
 if __name__ == "__main__":
     CONFIG_LOCATION_PREFIX = "./"

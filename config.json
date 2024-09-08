@@ -5,7 +5,7 @@
 	"colorful_background_enabled": false,
 	"colorful_charset_enabled": true,
 	"audio_enabled": true,
-	"boldify": false,
+	"boldify": true,
 	"background_color_offset": 0,
 	"charset_color_offset": 0
 }
