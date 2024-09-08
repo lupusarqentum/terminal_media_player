@@ -21,97 +21,91 @@ import cv2
 from src.configuration import Configuration
 
 
-class ImageProcessor:
-    """Processor capable of rendering and displaying image.
+class ImageRenderer:
+    """Renders a normal image into an ASCII art.
 
-    Displaying an image typically consists of three steps.
-    Firstly, any image must be loaded into memory from file.
-    Secondly, an image must be rendered into ASCII characters.
-    Thirdly, a rendered image must be printed to the stdout.
-    Each step is represented by a separate method.
-    Each method might be called several times if needed.
-    For example, you might re-call render()
-        to rerender image with different parameters.
-    For another one, you could call display() method several times
-        to display an image several times even if it was rendered just once.
+    Renders a normal image into a string of printable ASCII characters.
+    The string might be directly printed into the terminal.
+    Provide a configuration object containing rendering preferences to __init__
+        to alter rendering process.
     """
 
     def __init__(self, config: Configuration) -> None:
-        """Initializes self.
-
-        Initializes image processor by passing configuration object.
-        Config is used to alter rendering process by configuring it.
-        """
+        """Initializes image renderer with configuration object."""
         self._config = config
-        self._hasLoaded = False
-        self._hasRendered = False
 
-    def load(self, target_file_path: str) -> None:
-        """Receives file path to the target image and loads it into memory.
-
-        Raises:
-            IOError: If failed to read an image.
-        """
-        self._source_image = cv2.imread(target_file_path)
-        if self._source_image is None:
-            raise IOError("Failed to read an image: " + target_file_path)
-        self._hasLoaded = True
-        self._hasRendered = False
-
-    def render(self, terminal_rows: int, terminal_columns: int) -> None:
+    def render(self, image: numpy.ndarray, terminal_rows: int,
+               terminal_columns: int) -> None:
         """Renders an image.
 
-        Renders an image that was loaded with the load method.
-        Image will be rendered, but not displayed.
         Number of rows and columns must be given
-            to render image with correct size.
+            to render ASCII art that will fit the terminal.
 
         Parameters:
+            image: An image to render.
             terminal_rows: Number of rows in a rendered image.
             terminal_columns: Number of columns in a rendered image.
 
-        Raises:
-            ValueError: If no image was loaded with the load method.
+        Returns:
+            A string that is a result of rendering.
+            The string might be immediately printed or kept.
         """
-        if not self._hasLoaded:
-            raise ValueError("Can't render an image: no image was loaded")
-
         character_aspect_ratio = self._config.get_character_aspect_ratio()
         polarization_level = self._config.get_polarization_level()
         ascii_grayscale = self._config.get_ascii_characters_grayscale()
+        colorize_charset = self._config.get_colorful_charset_enabled()
+        colorize_background = self._config.get_colorful_background_enabled()
         charset_offset = self._config.get_charset_color_offset()
         background_offset = self._config.get_background_color_offset()
-        source_shape = self._source_image.shape
+        boldify = self._config.get_boldify()
+        source_shape = image.shape
 
         new_size = find_ASCII_image_size(source_shape[0], source_shape[1],
                                          terminal_rows, terminal_columns,
                                          character_aspect_ratio)
-
-        resized_image = cv2.resize(self._source_image, new_size)
+        resized_image = cv2.resize(image, new_size)
         grayscale = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
         polarized_grayscale = polarize_grayscale(grayscale, polarization_level)
         ascii_image = asciify_grayscale(polarized_grayscale, ascii_grayscale)
-        if self._config.get_colorful_charset_enabled():
-            ascii_image = colorize_ascii_image_characters(ascii_image,
-                                                          resized_image,
-                                                          charset_offset)
-        if self._config.get_colorful_background_enabled():
-            ascii_image = colorize_ascii_image_background(ascii_image,
-                                                          resized_image,
-                                                          background_offset)
-        self._rendered_image = ascii_image
-        self._terminal_columns = terminal_columns
-        self._hasRendered = True
+        rendered_image = self._really_render(ascii_image,
+                                             resized_image,
+                                             colorize_charset,
+                                             colorize_background,
+                                             charset_offset,
+                                             background_offset,
+                                             boldify,
+                                             terminal_columns)
+        return rendered_image
 
-    def display(self) -> None:
-        """Displays rendered image.
-
-        Raises:
-            ValueError: If no image was previously rendered.
-        """
-        if not self._hasRendered:
-            raise ValueError("Can't display an image: no image was rendered")
-        display_ascii_image(self._rendered_image, self._terminal_columns)
+    def _really_render(self, ascii_img: numpy.ndarray, source: numpy.ndarray,
+                       colorize_charset: bool, colorize_background: bool,
+                       charset_offset: int, background_offset: int,
+                       boldify: bool, terminal_columns: int) -> str:
+        def prepare_character(ascii_character, offset_char, offset_back):
+            subbuffer = ["", "", ascii_character]
+            if colorize_background:
+                subbuffer[1] = find_escape_sequence(offset_back, False)
+            if colorize_charset:
+                subbuffer[0] = find_escape_sequence(offset_char, True)
+            return "".join(subbuffer)
+        space = " " * ((terminal_columns - ascii_img.shape[1]) // 2)
+        source_offset_char = source + charset_offset
+        source_offset_back = source + background_offset
+        buffer = []
+        if boldify:
+            buffer.append("\033[1m")
+        for i in range(ascii_img.shape[0]):
+            buffer.append("\033[49m")
+            buffer.append(space)
+            for j in range(ascii_img.shape[1]):
+                buffer.append(prepare_character(ascii_img[i, j],
+                                                source_offset_char[i, j],
+                                                source_offset_back[i, j]))
+            buffer.append("\033[49m\n")
+        buffer.append("\033[39m\033[49m")
+        if boldify:
+            buffer.append("\033[0m")
+        return "".join(buffer)
 
 
 def find_ASCII_image_size(image_height: int, image_width: int,
@@ -201,75 +195,3 @@ def find_escape_sequence(color: list, for_character: bool) -> str:
         color_number = 16 + 36 * r + 6 * g + b
     beginning = "\033[38;5;" if for_character else "\033[48;5;"
     return beginning + str(color_number) + "m"
-
-
-def colorize_ascii_image_characters(ascii_image: numpy.ndarray,
-                                    source_image: numpy.ndarray,
-                                    color_offset: int) -> numpy.ndarray:
-    """Gives every ASCII image character a foreground color.
-
-    Assigns each ASCII image character foreground color
-        based on source_image color.
-
-    Parameters:
-        ascii_image: A matrix of ASCII characters.
-        source_image: An image. Must be the same shape as the ascii_image.
-        color_offset: A value to add to every color channel of foreground.
-
-    Returns:
-        An array of strings.
-            Each one is combination of escape sequences and a character.
-    """
-    result = numpy.zeros(ascii_image.shape, dtype="object")
-    source_offset = source_image + color_offset
-    for i in range(ascii_image.shape[0]):
-        for j in range(ascii_image.shape[1]):
-            color_sequence = find_escape_sequence(source_offset[i, j], True)
-            result[i, j] = color_sequence + ascii_image[i, j]
-    result[ascii_image.shape[0] - 1, ascii_image.shape[1] - 1] += "\033[39m"
-    return result
-
-
-def colorize_ascii_image_background(ascii_image: numpy.ndarray,
-                                    source_image: numpy.ndarray,
-                                    color_offset: int) -> numpy.ndarray:
-    """Gives every ASCII image character a background color.
-
-    Assigns each ASCII image character backround color
-        based on source_image color.
-
-    Parameters:
-        ascii_image: A matrix of ASCII characters.
-        source_image: An image. Must be the same shape as the ascii_image.
-        color_offset: A value to add to every color channel of background.
-
-    Returns:
-        An array of strings.
-            Each one is combination of escape sequences and a character.
-    """
-    result = numpy.zeros(ascii_image.shape, dtype="object")
-    source_offset = source_image + color_offset
-    for i in range(ascii_image.shape[0]):
-        for j in range(ascii_image.shape[1]):
-            color_sequence = find_escape_sequence(source_offset[i, j], False)
-            result[i, j] = color_sequence + ascii_image[i, j]
-    for i in range(ascii_image.shape[0]):
-        result[i, ascii_image.shape[1] - 1] += "\033[49m"
-    return result
-
-
-def display_ascii_image(ascii_image: numpy.ndarray,
-                        terminal_columns: int) -> None:
-    """Prints an ASCII image to stdout centered horizontally.
-
-    Parameters:
-        ascii_image: An ASCII image to print. Must be a matrix of strings.
-            Each string must contain exactly one printable character.
-        terminal_columns: A size of the terminal in columns.
-    """
-    columns_used = ascii_image.shape[1]
-    offset_length = (terminal_columns - columns_used) // 2
-    offset = " " * offset_length
-    for i in range(ascii_image.shape[0]):
-        print(offset, end="")
-        print("".join(ascii_image[i]))

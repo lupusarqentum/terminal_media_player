@@ -19,6 +19,30 @@ import os
 import sys
 
 
+class MediaTypes:
+    Unknown = 0
+    Image = 1
+    Video = 2
+    Audio = 3
+
+
+def recognize_media_type(target_file_path: str) -> int:
+    """Recognizes media type of file at target_file_path.
+
+    Returns:
+        MediaTypes.Unknown or MediaTypes.Image
+            or MediaTypes.Video or MediaTypes.Audio
+    """
+    # TODO: implement real logic here
+    return MediaTypes.Video
+
+
+def get_terminal_size() -> tuple:
+    """Finds terminal size and returns it as a tuple (rows, columns)."""
+    rows, columns = os.popen("stty size", "r").read().split()
+    return int(rows), int(columns)
+
+
 def print_error(message: str) -> None:
     """Prints red-colored error message to stderr."""
     print("\033[31m" + message + "\033[39m", file=sys.stderr)
@@ -27,9 +51,3 @@ def print_error(message: str) -> None:
 def print_warn(message: str) -> None:
     """Prints yellow-colored error message to stdout."""
     print("\033[33m" + message + "\033[39m")
-
-
-def get_terminal_size() -> tuple:
-    """Finds terminal size and returns it as a tuple (rows, columns)."""
-    rows, columns = os.popen("stty size", "r").read().split()
-    return int(rows), int(columns)
