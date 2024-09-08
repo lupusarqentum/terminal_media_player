@@ -3,7 +3,7 @@
 	"ascii_characters_grayscale": " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
 	"polarization_level": 0.0,
 	"colorful_background_enabled": false,
-	"colorful_charset_enabled": false,
+	"colorful_charset_enabled": true,
 	"audio_enabled": true,
 	"boldify": true,
 	"background_color_offset": 0,

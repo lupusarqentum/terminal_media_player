@@ -44,7 +44,8 @@ def watch_video(target_file_path: str, config: Configuration,
                 terminal_rows: int, terminal_columns: int) -> None:
     """Reads video, renders it frame-by-frame and prints to stdout."""
     image_renderer = ImageRenderer(config)
-    #TODO: do not trust user
+    print("Image renderer is initialized!")
+    # TODO: do not trust user
     cap = cv2.VideoCapture(target_file_path)
     while (cap.isOpened()):
         ret, frame = cap.read()

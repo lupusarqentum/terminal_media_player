@@ -32,7 +32,47 @@ class ImageRenderer:
 
     def __init__(self, config: Configuration) -> None:
         """Initializes image renderer with configuration object."""
+        self.reload_config(config)
+
+    def reload_config(self, config: Configuration) -> None:
+        """Reloads config."""
         self._config = config
+        self._generate_color_transform_tables()
+
+    def _generate_color_transform_tables(self):
+        charset_offset = self._config.get_charset_color_offset()
+        background_offset = self._config.get_background_color_offset()
+        colorful_charset = self._config.get_colorful_charset_enabled()
+        colorful_background = self._config.get_colorful_background_enabled()
+        self._escape_sequence = [None] * (256 ** 2)
+        for a in range(256):
+            for b in range(256):
+                pos = a * 256 + b
+                self._escape_sequence[pos] = ""
+                if colorful_charset:
+                    self._escape_sequence[pos] += f"\033[38;5;{a}m"
+                if colorful_background:
+                    self.escape_sequence[pos] += f"\033[48;5;{b}m]"
+        self._color_to_id = [None] * (2 ** 24)
+        for i in range(2 ** 24):
+            b = i // 256 // 256
+            g = i // 256 % 256
+            r = i % 256
+            if max((r, g, b)) - min((r, g, b)) < 15:
+                r = (r + charset_offset) % 256
+                fore = 232 + numpy.clip((r - 8) // 10, 0, 23)
+                g = (g + background_offset) % 256
+                back = 232 + numpy.clip((g - 8) // 10, 0, 23)
+            else:
+                bf = max((b + charset_offset) % 256 - 95, -1) // 40 + 1
+                gf = max((g + charset_offset) % 256 - 95, -1) // 40 + 1
+                rf = max((r + charset_offset) % 256 - 95, -1) // 40 + 1
+                fore = 16 + 36 * rf + 6 * gf + bf
+                bb = max((b + background_offset) % 256 - 95, -1) // 40 + 1
+                gb = max((g + background_offset) % 256 - 95, -1) // 40 + 1
+                rb = max((r + background_offset) % 256 - 95, -1) // 40 + 1
+                back = 16 + 36 * rb + 6 * gb + bb
+            self._color_to_id[i] = fore * 256 + back
 
     def render(self, image: numpy.ndarray, terminal_rows: int,
                terminal_columns: int) -> None:
@@ -53,10 +93,6 @@ class ImageRenderer:
         character_aspect_ratio = self._config.get_character_aspect_ratio()
         polarization_level = self._config.get_polarization_level()
         ascii_grayscale = self._config.get_ascii_characters_grayscale()
-        colorize_charset = self._config.get_colorful_charset_enabled()
-        colorize_background = self._config.get_colorful_background_enabled()
-        charset_offset = self._config.get_charset_color_offset()
-        background_offset = self._config.get_background_color_offset()
         boldify = self._config.get_boldify()
         source_shape = image.shape
 
@@ -69,28 +105,20 @@ class ImageRenderer:
         ascii_image = asciify_grayscale(polarized_grayscale, ascii_grayscale)
         rendered_image = self._really_render(ascii_image,
                                              resized_image,
-                                             colorize_charset,
-                                             colorize_background,
-                                             charset_offset,
-                                             background_offset,
                                              boldify,
                                              terminal_columns)
         return rendered_image
 
     def _really_render(self, ascii_img: numpy.ndarray, source: numpy.ndarray,
-                       colorize_charset: bool, colorize_background: bool,
-                       charset_offset: int, background_offset: int,
                        boldify: bool, terminal_columns: int) -> str:
-        def prepare_character(ascii_character, offset_char, offset_back):
-            subbuffer = ["", "", ascii_character]
-            if colorize_background:
-                subbuffer[1] = find_escape_sequence(offset_back, False)
-            if colorize_charset:
-                subbuffer[0] = find_escape_sequence(offset_char, True)
-            return "".join(subbuffer)
+        def prepare_character(ascii_character, color):
+            b, g, r = color
+            b = int(b)
+            g = int(g)
+            r = int(r)
+            cid = self._color_to_id[(b * 256 + g) * 256 + r]
+            return self._escape_sequence[cid] + ascii_character
         space = " " * ((terminal_columns - ascii_img.shape[1]) // 2)
-        source_offset_char = source + charset_offset
-        source_offset_back = source + background_offset
         buffer = []
         if boldify:
             buffer.append("\033[1m")
@@ -98,9 +126,7 @@ class ImageRenderer:
             buffer.append("\033[49m")
             buffer.append(space)
             for j in range(ascii_img.shape[1]):
-                buffer.append(prepare_character(ascii_img[i, j],
-                                                source_offset_char[i, j],
-                                                source_offset_back[i, j]))
+                buffer.append(prepare_character(ascii_img[i, j], source[i, j]))
             buffer.append("\033[49m\n")
         buffer.append("\033[39m\033[49m")
         if boldify:
@@ -167,31 +193,3 @@ def polarize_grayscale(grayscale: numpy.ndarray,
     multiplier = 127 / average_intensity * polarization_level
     return cv2.addWeighted(grayscale, multiplier,
                            grayscale, 1.0 - polarization_level, 0.0)
-
-
-def find_escape_sequence(color: list, for_character: bool) -> str:
-    """Finds ANSI escape sequence best matching given BGR color.
-
-    Finds one of 240 ANSI escape sequences that sets the best matching color.
-    16 possible colors out of all 256 are not used
-        because their exact BGR values depend on a specific terminal used.
-
-    Parameters:
-        color: A color.
-        for_character: True, if need to set color for foreground,
-            and False if need to set color for background.
-
-    Returns:
-        An ANSI escape sequence.
-    """
-    is_shade_of_gray = max(color) - min(color) < 15
-    color_number = None
-    if is_shade_of_gray:
-        color_number = 232 + numpy.clip((int(color[0]) - 8) // 10, 0, 23)
-    else:
-        b = max(int(color[0]) - 95, -1) // 40 + 1
-        g = max(int(color[1]) - 95, -1) // 40 + 1
-        r = max(int(color[2]) - 95, -1) // 40 + 1
-        color_number = 16 + 36 * r + 6 * g + b
-    beginning = "\033[38;5;" if for_character else "\033[48;5;"
-    return beginning + str(color_number) + "m"
