@@ -15,20 +15,6 @@ class ImageProcessor:
     Each method might be called several times if needed.
     For example, you might re-call render() to rerender image with different parameters.
     Or, you could call display() method several times to display an image several times even if it was rendered just once.
-
-    Methods defined here:
-
-    __init__(self, config, /)
-        Initializes an image processor with the provided config file.
-
-    load(self, target_file_path, /)
-        Parses and loads an image stored in the file target_file_path into RAM.
-
-    render(self, terminal_rows, terminal_columns, /)
-        Renders previously loaded image.
-
-    display(self, /)
-        Print previously loaded image to stdout.
     """
     
     def __init__(self, config: Configuration) -> None:
@@ -36,12 +22,6 @@ class ImageProcessor:
 
         Initializes image processor by passing configuration object.
         Config is used to alter rendering process by configuring it.
-
-        Parameters:
-            config: A Configuration instance.
-
-        Returns:
-            None.
         """
         self._config = config
         self._hasLoaded = False
@@ -49,12 +29,6 @@ class ImageProcessor:
     
     def load(self, target_file_path: str) -> None:
         """Receives file path to the target image and loads it into memory.
-
-        Parameters:
-            target_file_path: Path to the image to be loaded.
-
-        Returns:
-            None.
 
         Raises:
             IOError: If failed to read an image.
@@ -75,9 +49,6 @@ class ImageProcessor:
         Parameters:
             terminal_rows: Number of rows in a rendered image.
             terminal_columns: Number of columns in a rendered image.
-
-        Returns:
-            None.
 
         Raises:
             ValueError: If no image was previously loaded with the load method.
@@ -101,11 +72,6 @@ class ImageProcessor:
     
     def display(self) -> None:
         """Displays rendered image.
-
-        Displays an image. An image has to be rendered before displaying.
-
-        Returns:
-            None.
 
         Raises:
             ValueError: If no image was previously rendered.
@@ -142,14 +108,7 @@ def find_ASCII_image_size(image_height: int, image_width: int, terminal_rows: in
 
 
 def asciify_grayscale(grayscale: numpy.ndarray, ascii_characters_grayscale: str) -> numpy.ndarray:
-    """Converts a grayscale of an image to ASCII image.
-    
-    Parameters:
-        grayscale: A matrix of integers from 0 to 255 (gray intensity).
-    
-    Returns:
-        A matrix of ASCII characters. 
-    """
+    """Converts a grayscale of an image to ASCII image."""
     def asciify_pixel(intensity):
         pos = min(round(intensity / 255 * len(ascii_characters_grayscale)), len(ascii_characters_grayscale) - 1)
         return ascii_characters_grayscale[pos]
@@ -165,9 +124,6 @@ def polarize_grayscale(grayscale: numpy.ndarray, polarization_level: float) -> n
         polarization_level: A float number from 0.0 to 1.0 controlling how aggressively
             polarization should happen. For example, 0.0 value means nothing will happen at all,
             while 1.0 value means very aggressive polarization.
-    
-    Returns:
-        A new matrix of integers from 0 to 255 (gray intensity of polarized grayscale).
     """
     if polarization_level == 0.0:
         return grayscale
@@ -184,13 +140,12 @@ def convert_color_to_ansi_sequence(color: list, for_character: bool) -> str:
     RGB values highly depend on a specific terminal.
     
     Parameters:
-        color: An array-like object containing three integers from 0 to 255, i.e. BGR channels.
+        color: An array-like object containing three integers from 0 to 255 representing BGR channels.
         for_character: True, if ANSI escape sequence for character color setting is required,
             and False if need to set color for background.
     
     Returns:
         An ANSI escape sequence.
-    
     """
     is_shade_of_gray = max(color) - min(color) < 15
     color_number = None
@@ -257,9 +212,6 @@ def display_ascii_image(ascii_image: numpy.ndarray, terminal_columns: int) -> No
         ascii_image: An ASCII image to print. Must be a matrix of strings.
             Each string must contain exactly one printable character.
         terminal_columns: A size of the terminal in columns.
-    
-    Returns:
-        None.
     """
     columns_used = ascii_image.shape[1]
     offset_length = (terminal_columns - columns_used) // 2

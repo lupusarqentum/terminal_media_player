@@ -9,11 +9,7 @@ from src.utils import print_error
 
 
 def get_terminal_size() -> tuple:
-    """Finds terminal size.
-    
-    Returns:
-        a tuple of integers (rows, columns) -- terminal size.
-    """
+    """Finds terminal size and returns it as a tuple (rows, columns)."""
     rows, columns = os.popen("stty size", "r").read().split()
     return int(rows), int(columns)
 

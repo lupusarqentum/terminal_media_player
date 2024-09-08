@@ -5,54 +5,14 @@ from src.utils import print_error
 
 
 class Configuration:
-    """Storage for all config values.
-
-    Methods defined here:
-
-    read_and_apply_JSON_config(self, config_file_path)
-        Reads config file located at config_file_path, parses and validates it,
-        and applies it.
-
-    get_character_aspect_ratio(self)
-        Returns character aspect ratio.
-        It should be calculated as height / width of the terminal characters.
-        Calculated value should be supplied within the config file.
-
-    get_ascii_characters_grayscale(self)
-        Returns a string containing printable ASCII characters sorted from lightest to darkest.
-
-    get_polarization_level(self)
-        Returns intensity polarization level.
-
-    get_colorful_background_enabled(self)
-        Returns True if background of characters should be painted.
-
-    get_colorful_charset_enabled(self)
-        Returns True if characters should be painted.
-
-    get_audio_enabled(self)
-        Returns True if audio should be played.
-    
-    get_boldify(self)
-        Returns True if characters should be printed bold.
-
-    get_background_color_offset(self)
-        Returns characters' backgrounds' color channels offset.
-
-    get_charset_color_offset(self)
-        Returns characters' color channels offset.
-    """
+    """Storage for all config values."""
 
     def read_and_apply_JSON_config(self, config_file_path: str) -> bool:
         """Reads JSON-formatted config file and applies it.
 
-        Reads JSON-formatted config file, applies it.
         If config file is invalid, or any field is missing,
-        or any value is inappropriate, False is returned and no actual change happens.
-        True is returned if everything OK.
-
-        Parameters:
-            config_file_path: A config file path.
+            or any value is inappropriate, config applying is failed
+            and no actual change happens.
 
         Returns:
             True, if config file was successfully read and applied, and false otherwise.
