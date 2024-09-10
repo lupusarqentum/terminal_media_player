@@ -52,7 +52,7 @@ class ImageRenderer:
                 if colorful_charset:
                     self._escape_sequence[pos] += f"\033[38;5;{a}m"
                 if colorful_background:
-                    self.escape_sequence[pos] += f"\033[48;5;{b}m]"
+                    self.escape_sequence[pos] += f"\033[48;5;{b}m"
         self._color_to_id = [None] * (2 ** 24)
         for i in range(2 ** 24):
             b = i // 256 // 256

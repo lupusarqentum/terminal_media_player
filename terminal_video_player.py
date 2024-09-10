@@ -18,6 +18,7 @@
 # https://www.gnu.org/licenses/gpl-3.0.html
 
 import sys
+import os
 
 import cv2
 
@@ -44,16 +45,17 @@ def watch_video(target_file_path: str, config: Configuration,
                 terminal_rows: int, terminal_columns: int) -> None:
     """Reads video, renders it frame-by-frame and prints to stdout."""
     image_renderer = ImageRenderer(config)
-    print("Image renderer is initialized!")
     # TODO: do not trust user
     cap = cv2.VideoCapture(target_file_path)
+    os.system("clear")
     while (cap.isOpened()):
         ret, frame = cap.read()
         if ret is True:
             terminal_rows, terminal_columns = get_terminal_size()
+            terminal_rows -= 2
             rendered_frame = image_renderer.render(frame, terminal_rows,
                                                    terminal_columns)
-            print(rendered_frame)
+            print("\033[H" + rendered_frame)
         else:
             break
 
@@ -79,7 +81,7 @@ default config. Can't operate")
     if len(sys.argv) < 2:
         target_file_path = "examples/input.png"
         print_warn("No input file path was provided. \
-Assuming" + target_file_path)
+Assuming " + target_file_path)
     else:
         target_file_path = sys.argv[1]
         print("Target media path: \"" + target_file_path + "\"")
@@ -96,3 +98,4 @@ Assuming" + target_file_path)
         watch_audio(target_file_path, config)
     elif media_type == MediaTypes.Video:
         watch_video(target_file_path, config, terminal_rows, terminal_columns)
+
