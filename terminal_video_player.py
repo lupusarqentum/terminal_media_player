@@ -22,9 +22,9 @@ import os
 
 import cv2
 
-from src.configuration import Configuration
-from src.image_processing import ImageRenderer
-from src.utils import (print_error, print_warn,
+from src.python.configuration import Configuration
+from src.python.image_processing import ImageRenderer
+from src.python.utils import (print_error, print_warn,
                        get_terminal_size, MediaTypes, recognize_media_type)
 
 

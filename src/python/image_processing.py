@@ -18,7 +18,7 @@
 import numpy
 import cv2
 
-from src.configuration import Configuration
+from src.python.configuration import Configuration
 
 
 class ImageRenderer:

@@ -18,7 +18,7 @@
 import json
 from string import printable
 
-from src.utils import print_error
+from src.python.utils import print_error
 
 
 class Configuration:
