@@ -17,6 +17,7 @@
 
 import numpy
 import cv2
+import terminalrenderer as tr
 
 from src.python.configuration import Configuration
 
@@ -32,47 +33,7 @@ class ImageRenderer:
 
     def __init__(self, config: Configuration) -> None:
         """Initializes image renderer with configuration object."""
-        self.reload_config(config)
-
-    def reload_config(self, config: Configuration) -> None:
-        """Reloads config."""
         self._config = config
-        self._generate_color_transform_tables()
-
-    def _generate_color_transform_tables(self):
-        charset_offset = self._config.get_charset_color_offset()
-        background_offset = self._config.get_background_color_offset()
-        colorful_charset = self._config.get_colorful_charset_enabled()
-        colorful_background = self._config.get_colorful_background_enabled()
-        self._escape_sequence = [None] * (256 ** 2)
-        for a in range(256):
-            for b in range(256):
-                pos = a * 256 + b
-                self._escape_sequence[pos] = ""
-                if colorful_charset:
-                    self._escape_sequence[pos] += f"\033[38;5;{a}m"
-                if colorful_background:
-                    self.escape_sequence[pos] += f"\033[48;5;{b}m"
-        self._color_to_id = [None] * (2 ** 24)
-        for i in range(2 ** 24):
-            b = i // 256 // 256
-            g = i // 256 % 256
-            r = i % 256
-            if max((r, g, b)) - min((r, g, b)) < 15:
-                r = (r + charset_offset) % 256
-                fore = 232 + numpy.clip((r - 8) // 10, 0, 23)
-                g = (g + background_offset) % 256
-                back = 232 + numpy.clip((g - 8) // 10, 0, 23)
-            else:
-                bf = max((b + charset_offset) % 256 - 95, -1) // 40 + 1
-                gf = max((g + charset_offset) % 256 - 95, -1) // 40 + 1
-                rf = max((r + charset_offset) % 256 - 95, -1) // 40 + 1
-                fore = 16 + 36 * rf + 6 * gf + bf
-                bb = max((b + background_offset) % 256 - 95, -1) // 40 + 1
-                gb = max((g + background_offset) % 256 - 95, -1) // 40 + 1
-                rb = max((r + background_offset) % 256 - 95, -1) // 40 + 1
-                back = 16 + 36 * rb + 6 * gb + bb
-            self._color_to_id[i] = fore * 256 + back
 
     def render(self, image: numpy.ndarray, terminal_rows: int,
                terminal_columns: int) -> None:
@@ -96,6 +57,12 @@ class ImageRenderer:
         boldify = self._config.get_boldify()
         source_shape = image.shape
 
+        paint_background = self._config.get_colorful_background_enabled()
+        paint_foreground = self._config.get_colorful_charset_enabled()
+        boldify_foreground = self._config.get_boldify()
+        background_color_offset = self._config.get_background_color_offset()
+        foreground_color_offset = self._config.get_charset_color_offset()
+
         new_size = find_ASCII_image_size(source_shape[0], source_shape[1],
                                          terminal_rows, terminal_columns,
                                          character_aspect_ratio)
@@ -103,35 +70,11 @@ class ImageRenderer:
         grayscale = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
         polarized_grayscale = polarize_grayscale(grayscale, polarization_level)
         ascii_image = asciify_grayscale(polarized_grayscale, ascii_grayscale)
-        rendered_image = self._really_render(ascii_image,
-                                             resized_image,
-                                             boldify,
-                                             terminal_columns)
-        return rendered_image
 
-    def _really_render(self, ascii_img: numpy.ndarray, source: numpy.ndarray,
-                       boldify: bool, terminal_columns: int) -> str:
-        def prepare_character(ascii_character, color):
-            b, g, r = color
-            b = int(b)
-            g = int(g)
-            r = int(r)
-            cid = self._color_to_id[(b * 256 + g) * 256 + r]
-            return self._escape_sequence[cid] + ascii_character
-        space = " " * ((terminal_columns - ascii_img.shape[1]) // 2)
-        buffer = []
-        if boldify:
-            buffer.append("\033[1m")
-        for i in range(ascii_img.shape[0]):
-            buffer.append("\033[49m")
-            buffer.append(space)
-            for j in range(ascii_img.shape[1]):
-                buffer.append(prepare_character(ascii_img[i, j], source[i, j]))
-            buffer.append("\033[49m\n")
-        buffer.append("\033[39m\033[49m")
-        if boldify:
-            buffer.append("\033[0m")
-        return "".join(buffer)
+        return tr.render(ascii_image, resized_image, paint_background,
+                         paint_foreground, boldify_foreground,
+                         background_color_offset,
+                         foreground_color_offset, terminal_columns)
 
 
 def find_ASCII_image_size(image_height: int, image_width: int,

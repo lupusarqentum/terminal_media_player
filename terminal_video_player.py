@@ -45,12 +45,13 @@ def watch_video(target_file_path: str, config: Configuration,
                 terminal_rows: int, terminal_columns: int) -> None:
     """Reads video, renders it frame-by-frame and prints to stdout."""
     image_renderer = ImageRenderer(config)
-    # TODO: do not trust user
+    # TODO: do not trust user that file contains valid info
     cap = cv2.VideoCapture(target_file_path)
     os.system("clear")
     while (cap.isOpened()):
         ret, frame = cap.read()
         if ret is True:
+            #TODO: if terminal size modified, do os.system("clear") to prevent garbage
             terminal_rows, terminal_columns = get_terminal_size()
             terminal_rows -= 2
             rendered_frame = image_renderer.render(frame, terminal_rows,
