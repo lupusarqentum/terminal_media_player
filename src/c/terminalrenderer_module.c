@@ -19,6 +19,30 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <numpy/arrayobject.h>
+#include <stdbool.h>
+
+static char* render(PyArrayObject* ascii_art, PyArrayObject* source_image, 
+                    bool should_paint_back, bool should_paint_fore, 
+                    bool boldify, unsigned char back_color_offset, 
+                    unsigned char fore_color_offset, unsigned int terminal_columns) {
+    char* result = PyMem_RawMalloc(14); /* See also: PyMem_RawMalloc, PyMem_RawRealloc, PyMem_RawFree */
+    result[0] =  'H';
+    result[1] =  'e';
+    result[2] =  'l';
+    result[3] =  'l';
+    result[4] =  'o';
+    result[5] =  ',';
+    result[6] =  ' ';
+    result[7] =  'W';
+    result[8] =  'o';
+    result[9] =  'r';
+    result[10] = 'l';
+    result[11] = 'd';
+    result[12] = '!';
+    result[13] = '\0';
+    return result;
+}
 
 /**
  * Parameters list:
@@ -31,10 +55,52 @@
  *     foreground_color_offset
  *     terminal_columns
  */
- 
+
 static PyObject* terminalrenderer_render(PyObject* self, PyObject* args) {
-    char* result = "Hello, World!\n";
+    PyArrayObject* ascii_art;
+    PyArrayObject* source_image;
+    bool should_paint_back;
+    bool should_paint_fore;
+    bool boldify;
+    unsigned char back_color_offset;
+    unsigned char fore_color_offset;
+    unsigned int terminal_columns;
+    if (!PyArg_ParseTuple(args, "O!O!pppbbI", 
+                          &PyArray_Type, &ascii_art,
+                          &PyArray_Type, &source_image,
+                          &should_paint_back, &should_paint_fore,
+                          &boldify, &back_color_offset,
+                          &fore_color_offset, &terminal_columns)) {
+        return NULL;
+    }
+    
+    int ascii_art_ndims = PyArray_NDIM(ascii_art);
+    int source_image_ndims = PyArray_NDIM(source_image);
+    npy_intp* ascii_art_dims = PyArray_DIMS(ascii_art);
+    npy_intp* source_image_dims = PyArray_DIMS(source_image);
+    
+    if (ascii_art_ndims != 2 || source_image_ndims != 3 || 
+        ascii_art_dims[0] != source_image_dims[0] || 
+        ascii_art_dims[1] != source_image_dims[1] || 
+        source_image_dims[2] != 3) {
+        PyErr_SetString(PyExc_ValueError, "ASCII art shape or source image shape are invalid or mismatch");
+        return NULL;
+    }
+    if (terminal_columns < source_image_dims[1]) {
+        PyErr_SetString(PyExc_ValueError, "Terminal doesn't have enough columns to display an image");
+        return NULL;
+    }
+    if (PyArray_TYPE(ascii_art) != NPY_UNICODE || 
+        PyArray_TYPE(source_image) != NPY_UBYTE) {
+        PyErr_SetString(PyExc_TypeError, "Expected that an element of ascii_art is of Unicode type and an element of source_image is uint8");
+        return NULL;
+    }
+    
+    char* result = render(ascii_art, source_image, should_paint_back, 
+                          should_paint_fore, boldify, back_color_offset, 
+                          fore_color_offset, terminal_columns);
     PyObject* pyResult = PyUnicode_FromString(result);
+    PyMem_RawFree(result);
     return pyResult;
 }
 
@@ -53,5 +119,6 @@ static struct PyModuleDef terminalrenderermodule = {
 };
 
 PyMODINIT_FUNC PyInit_terminalrenderer(void) {
+    import_array();
     return PyModule_Create(&terminalrenderermodule);
 }

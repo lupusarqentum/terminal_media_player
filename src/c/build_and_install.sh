@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 PYTHON_INTERPRETER_INCLUDE_DIR=/usr/include/python3.12
-NUMPY_INCLUDE_DIR=/home/lisakodee/Project/Programmming/TerminalVideoPlayer/venv/lib/python3.12/site-packages/numpy/_core/include
+NUMPY_INCLUDE_DIR=/home/lisakodee/Project/Programming/TerminalVideoPlayer/venv/lib/python3.12/site-packages/numpy/_core/include
 INSTALLATION_DIR=/home/lisakodee/Project/Programming/TerminalVideoPlayer/venv/lib/python3.12/site-packages
 
 echo Compiling extension module...
