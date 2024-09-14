@@ -21,28 +21,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <stdbool.h>
-
-static char* render(PyArrayObject* ascii_art, PyArrayObject* source_image, 
-                    bool should_paint_back, bool should_paint_fore, 
-                    bool boldify, unsigned char back_color_offset, 
-                    unsigned char fore_color_offset, unsigned int terminal_columns) {
-    char* result = PyMem_RawMalloc(14); /* See also: PyMem_RawMalloc, PyMem_RawRealloc, PyMem_RawFree */
-    result[0] =  'H';
-    result[1] =  'e';
-    result[2] =  'l';
-    result[3] =  'l';
-    result[4] =  'o';
-    result[5] =  ',';
-    result[6] =  ' ';
-    result[7] =  'W';
-    result[8] =  'o';
-    result[9] =  'r';
-    result[10] = 'l';
-    result[11] = 'd';
-    result[12] = '!';
-    result[13] = '\0';
-    return result;
-}
+#include "render.h"
 
 /**
  * Parameters list:
@@ -96,7 +75,7 @@ static PyObject* terminalrenderer_render(PyObject* self, PyObject* args) {
         return NULL;
     }
     
-    char* result = render(ascii_art, source_image, should_paint_back, 
+    char* result = TR_render(ascii_art, source_image, should_paint_back, 
                           should_paint_fore, boldify, back_color_offset, 
                           fore_color_offset, terminal_columns);
     PyObject* pyResult = PyUnicode_FromString(result);
