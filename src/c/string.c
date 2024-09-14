@@ -40,6 +40,13 @@ void TR_append_character(TR_string* obj, char c) {
     obj->data[obj->length++] = c;
 }
 
+void TR_append_cstring(TR_string* obj, char* s) {
+    while ((*s) != '\0') {
+        TR_append_character(obj, *s);
+        s++;
+    }
+}
+
 /* number must contain no more than three decimal digits */
 
 void TR_append_number(TR_string* obj, int number) {

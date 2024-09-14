@@ -33,11 +33,7 @@ char* TR_render(PyArrayObject* ascii_art, PyArrayObject* source_image,
                     bool boldify, unsigned char back_color_offset, 
                     unsigned char fore_color_offset, unsigned int terminal_columns) {
     TR_string* buffer = TR_create_string();
-    TR_append_character(buffer, 'H');
-    TR_append_character(buffer, 'e');
-    TR_append_character(buffer, 'l');
-    TR_append_character(buffer, 'l');
-    TR_append_character(buffer, 'o');
+    TR_append_cstring(buffer, "Hello");
     TR_append_character(buffer, ',');
     TR_append_character(buffer, ' ');
     TR_append_number(buffer, 342);

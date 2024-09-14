@@ -35,6 +35,8 @@ TR_string* TR_create_string();
 
 void TR_append_character(TR_string* obj, char c);
 
+void TR_append_cstring(TR_string* obj, char* s);
+
 /* number must contain no more than three decimal digits */
 
 void TR_append_number(TR_string* obj, int number);
