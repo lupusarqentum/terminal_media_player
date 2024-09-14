@@ -26,26 +26,26 @@
 #include <stdbool.h>
 
 #include "render.h"
+#include "string.h"
 
 char* TR_render(PyArrayObject* ascii_art, PyArrayObject* source_image, 
                     bool should_paint_back, bool should_paint_fore, 
                     bool boldify, unsigned char back_color_offset, 
                     unsigned char fore_color_offset, unsigned int terminal_columns) {
-    char* result = PyMem_RawMalloc(14);
-    result[0] =  'H';
-    result[1] =  'x';
-    result[2] =  'x';
-    result[3] =  'x';
-    result[4] =  'x';
-    result[5] =  ',';
-    result[6] =  ' ';
-    result[7] =  'W';
-    result[8] =  'o';
-    result[9] =  'r';
-    result[10] = 'l';
-    result[11] = 'd';
-    result[12] = '!';
-    result[13] = '\0';
+    TR_string* buffer = TR_create_string();
+    TR_append_character(buffer, 'H');
+    TR_append_character(buffer, 'e');
+    TR_append_character(buffer, 'l');
+    TR_append_character(buffer, 'l');
+    TR_append_character(buffer, 'o');
+    TR_append_character(buffer, ',');
+    TR_append_character(buffer, ' ');
+    TR_append_number(buffer, 342);
+    TR_append_character(buffer, '@');
+    TR_append_number(buffer, 28);
+    TR_append_character(buffer, '#');
+    TR_append_number(buffer, 7);
+    char* result = TR_shrink_and_free(buffer);
     return result;
 }
 

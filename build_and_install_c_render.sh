@@ -12,11 +12,11 @@ cd src/c
 
 echo Compiling extension module...
 
-gcc -fPIC -c -I"$PYTHON_INTERPRETER_INCLUDE_DIR" -I"$NUMPY_INCLUDE_DIR" terminalrenderer_module.c render.c
+gcc -fPIC -c -I"$PYTHON_INTERPRETER_INCLUDE_DIR" -I"$NUMPY_INCLUDE_DIR" terminalrenderer_module.c render.c string.c
 
 echo Linking shared library...
 
-gcc --shared terminalrenderer_module.o render.o -o terminalrenderer.so
+gcc --shared terminalrenderer_module.o render.o string.o -o terminalrenderer.so
 
 echo Installing...
 
@@ -27,3 +27,4 @@ echo Cleaning...
 rm -f terminalrenderer.so
 rm -f terminalrenderer_module.o
 rm -f render.o
+rm -f string.o
