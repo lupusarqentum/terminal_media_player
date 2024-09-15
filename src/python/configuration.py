@@ -85,10 +85,8 @@ class Configuration:
         return type(value) is str and all(char in printable for char in value)
 
     def get_character_aspect_ratio(self) -> float:
-        """Returns character aspect ratio.
-
-        It should be calculated as height / width of the terminal characters.
-        Calculated value should be supplied within the config file.
+        """Returns character aspect ratio,
+               calculated as height / width of terminal characters.
         """
         return self._character_aspect_ratio
 

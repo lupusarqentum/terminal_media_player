@@ -27,12 +27,10 @@ class ImageRenderer:
 
     Renders a normal image into a string of printable ASCII characters.
     The string might be directly printed into the terminal.
-    Provide a configuration object containing rendering preferences to __init__
-        to alter rendering process.
     """
 
     def __init__(self, config: Configuration) -> None:
-        """Initializes image renderer with configuration object."""
+        """Initializes with config containing rendering options."""
         self._character_aspect_ratio = config.get_character_aspect_ratio()
         self._boldify = config.get_boldify()
         self._paint_background = config.get_colorful_background_enabled()
@@ -41,9 +39,11 @@ class ImageRenderer:
         self._generate_intensity_to_ascii_table(ascii_grayscale)
 
     def _generate_intensity_to_ascii_table(self, grayscale: str) -> None:
-        table = [grayscale[min(round(intensity / 255 * len(grayscale)),
-                                     len(grayscale) - 1)]
-                                     for intensity in range(256)]
+        def asciify_single_unit(intensity):
+            pos = min(round(intensity / 255 * len(grayscale)),
+                      len(grayscale) - 1)
+            return grayscale[pos]
+        table = [asciify_single_unit(intensity) for intensity in range(256)]
         self._intensity_to_ascii = numpy.array(table)
 
     def render(self, image: numpy.ndarray, terminal_rows: int,

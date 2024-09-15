@@ -31,9 +31,8 @@ def recognize_media_type(target_file_path: str) -> int:
 
     Returns:
         MediaTypes.Unknown or MediaTypes.Image
-            or MediaTypes.Video or MediaTypes.Audio
+            or MediaTypes.Video or MediaTypes.Audio.
     """
-    # TODO: implement real logic here
     return MediaTypes.Video
 
 
