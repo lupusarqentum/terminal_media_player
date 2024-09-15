@@ -54,6 +54,7 @@ void TR_append_cstring(TR_string* obj, char* s) {
 
 void TR_append_number(TR_string* obj, int number) {
     char buffer[4];
+    memset(buffer, '\0', 4);
     sprintf(buffer, "%d", number);
     TR_append_cstring(obj, buffer);
 }
