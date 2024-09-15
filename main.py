@@ -21,16 +21,21 @@ import sys
 
 import cv2
 
-from src.python.configuration import Configuration
+from src.python.configuration import Configuration, get_config_location
 from src.python.image_processing import ImageRenderer
 from src.python.terminal_utils import (print_error, print_warn,
                                        get_terminal_size, clear_terminal)
 from src.python.media_types import MediaTypes, recognize_media_type
 
 
-def watch_image(target_file_path: str, config: Configuration,
-                terminal_rows: int, terminal_columns: int) -> None:
+def watch_audio(target_file_path: str, config: Configuration) -> None:
+    print_error("Audio support is not yet implemented")
+    sys.exit(-1)
+
+
+def watch_image(target_file_path: str, config: Configuration) -> None:
     """Reads image, renders it and prints to stdout."""
+    terminal_rows, terminal_columns = get_terminal_size()
     image = cv2.imread(target_file_path)
     if image is None:
         print_error("Failed to load an image: " + target_file_path)
@@ -41,8 +46,7 @@ def watch_image(target_file_path: str, config: Configuration,
     print(rendered_image)
 
 
-def watch_video(target_file_path: str, config: Configuration,
-                terminal_rows: int, terminal_columns: int) -> None:
+def watch_video(target_file_path: str, config: Configuration) -> None:
     """Reads video, renders it frame-by-frame and prints to stdout."""
     image_renderer = ImageRenderer(config)
     cap = cv2.VideoCapture(target_file_path)
@@ -79,41 +83,31 @@ def watch_video(target_file_path: str, config: Configuration,
             break
 
 
-def watch_audio(target_file_path: str, config: Configuration) -> None:
-    print_error("Audio support is not yet implemented")
-    sys.exit(-1)
-
-
 if __name__ == "__main__":
-    CONFIG_LOCATION_PREFIX = "./"
     config = Configuration()
-    config_path = CONFIG_LOCATION_PREFIX + "config.json"
-    if not config.read_and_apply_JSON_config(config_path):
-        print_error("An error occurred when trying to apply config. \
-Fallback to default config instead")
-        default_config_path = CONFIG_LOCATION_PREFIX + "default_config.json"
-        if not config.read_and_apply_JSON_config(default_config_path):
-            print_error("An error occurred when trying to apply \
-default config. Can't operate")
-            sys.exit(-1)
+    config_file_location = get_config_location()
+    if not config.try_apply_json(config_file_location):
+        print_error("Failed to apply config file at " + config_file_location)
+        print_error("Will fallback to default values")
+        config.load_default_values()
+        print_warn("There will be attempt to regenerate config file at " +
+                   config_file_location)
+        config.save_to_json(config_file_location)
 
     if len(sys.argv) < 2:
-        target_file_path = "examples/input.png"
-        print_warn("No input file path was provided. \
-Assuming " + target_file_path)
-    else:
-        target_file_path = sys.argv[1]
-        print("Target media path: \"" + target_file_path + "\"")
-
-    terminal_rows, terminal_columns = get_terminal_size()
+        print("No input file path was provided")
+        print("Provide path to input file as a first command line argument")
+        exit(-1)
+    target_file_path = sys.argv[1]
+    print("Target media path:", target_file_path)
 
     media_type = recognize_media_type(target_file_path)
     if media_type == MediaTypes.Unknown:
-        print_error("Failed to recognize file type: " + target_file_path)
+        print_error("Failed to recognize file type:", target_file_path)
         sys.exit(-1)
     elif media_type == MediaTypes.Image:
-        watch_image(target_file_path, config, terminal_rows, terminal_columns)
+        watch_image(target_file_path, config)
     elif media_type == MediaTypes.Audio:
         watch_audio(target_file_path, config)
     elif media_type == MediaTypes.Video:
-        watch_video(target_file_path, config, terminal_rows, terminal_columns)
+        watch_video(target_file_path, config)

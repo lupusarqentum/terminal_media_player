@@ -15,6 +15,7 @@
 # along with this program.  If not, see
 # https://www.gnu.org/licenses/gpl-3.0.html
 
+import os
 import json
 from string import printable
 
@@ -24,15 +25,43 @@ from src.python.terminal_utils import print_error
 class Configuration:
     """Storage for all config values."""
 
-    def read_and_apply_JSON_config(self, config_file_path: str) -> bool:
-        """Reads JSON-formatted config file and applies it.
+    def load_default_values(self):
+        """Assigns default config values."""
+        self._character_aspect_ratio = 2.25
+        self._ascii_characters_grayscale = " .'`^\",:;Il!i><~+_-?][}{1)(" + \
+                                           "|\\/tfjrxnuvczXYUJCLQ0OZmwqp" + \
+                                           "dbkhao*#MW&8%B@$"
+        self._paint_background = False
+        self._paint_foreground = True
+        self._use_all_rgb_colors = True
+        self._audio_enabled = True
+        self._boldify = True
+
+    def save_to_json(self, config_file_path: str) -> None:
+        """Saves all config values to JSON file."""
+        data = {"character_aspect_ratio": self._character_aspect_ratio,
+                "ascii_characters_grayscale": self._ascii_characters_grayscale,
+                "paint_background": self._paint_background,
+                "paint_foreground": self._paint_foreground,
+                "use_all_rgb_colors": self._use_all_rgb_colors,
+                "enable_audio": self._audio_enabled,
+                "boldify": self._boldify}
+        try:
+            os.makedirs(os.path.dirname(config_file_path), exist_ok=True)
+            with open(config_file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+        except:
+            print_error("Failed to save config file at " + config_file_path)
+
+    def try_apply_json(self, config_file_path: str) -> bool:
+        """Parses JSON-formatted config file and applies it.
 
         If config file is invalid, or any field is missing,
             or any value is inappropriate, config applying is failed
             and no actual change happens.
 
         Returns:
-            True, if config was successfully read and applied, False otherwise.
+            True, if config was successfully applied, False otherwise.
         """
         try:
             file = open(config_file_path, "r")
@@ -117,3 +146,12 @@ class Configuration:
     def should_boldify(self) -> bool:
         """Returns True if characters should be printed bold."""
         return self._boldify
+
+
+def get_config_location() -> str:
+    user_name = os.getenv("USER")
+    home_folder = os.getenv("HOME", "/home/" + user_name)
+    config_folder = os.getenv("XDG_CONFIG_HOME",
+                              default=home_folder + "/.config")
+    result = config_folder + "/lupusarqentum/terminal_media_player.json"
+    return result
