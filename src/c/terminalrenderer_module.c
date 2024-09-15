@@ -40,14 +40,15 @@ static PyObject* terminalrenderer_render(PyObject* self, PyObject* args) {
     PyArrayObject* intensity_to_grayscale;
     bool should_paint_back;
     bool should_paint_fore;
+    bool use_all_rgb;
     bool boldify;
     unsigned int terminal_columns;
-    if (!PyArg_ParseTuple(args, "O!O!O!pppI", 
+    if (!PyArg_ParseTuple(args, "O!O!O!ppppI", 
                           &PyArray_Type, &grayscale,
                           &PyArray_Type, &source_image,
                           &PyArray_Type, &intensity_to_grayscale,
-                          &should_paint_back, &should_paint_fore,
-                          &boldify, &terminal_columns)) {
+                          &should_paint_back, &should_paint_fore, 
+                          &use_all_rgb, &boldify, &terminal_columns)) {
         return NULL;
     }
     
@@ -80,8 +81,8 @@ static PyObject* terminalrenderer_render(PyObject* self, PyObject* args) {
     }
     
     char* result = TR_render(grayscale, source_image, intensity_to_grayscale,
-                             should_paint_back, should_paint_fore, boldify, 
-                             terminal_columns);
+                             should_paint_back, should_paint_fore, use_all_rgb,
+                             boldify, terminal_columns);
     PyObject* pyResult = PyUnicode_FromString(result);
     PyMem_RawFree(result);
     return pyResult;

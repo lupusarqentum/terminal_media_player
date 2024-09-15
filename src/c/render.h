@@ -33,7 +33,7 @@
 char* TR_render(PyArrayObject* grayscale, PyArrayObject* source_image, 
                 PyArrayObject* intensity_to_grayscale,
                 bool should_paint_back, bool should_paint_fore, 
-                bool boldify, unsigned int terminal_columns);
+                bool use_all_rgb, bool boldify, unsigned int terminal_columns);
 
 /* This function should be called at least once before TR_render() call. */
 

@@ -32,9 +32,10 @@ class ImageRenderer:
     def __init__(self, config: Configuration) -> None:
         """Initializes with config containing rendering options."""
         self._character_aspect_ratio = config.get_character_aspect_ratio()
-        self._boldify = config.get_boldify()
-        self._paint_background = config.get_colorful_background_enabled()
-        self._paint_foreground = config.get_colorful_charset_enabled()
+        self._paint_background = config.should_paint_background()
+        self._paint_foreground = config.should_paint_foreground()
+        self._use_all_rgb_colors = config.use_all_rgb_colors()
+        self._boldify = config.should_boldify()
         ascii_grayscale = config.get_ascii_characters_grayscale()
         self._generate_intensity_to_ascii_table(ascii_grayscale)
 
@@ -73,6 +74,7 @@ class ImageRenderer:
                                    self._intensity_to_ascii,
                                    self._paint_background,
                                    self._paint_foreground,
+                                   self._use_all_rgb_colors,
                                    self._boldify,
                                    terminal_columns)
         return rendered_frame

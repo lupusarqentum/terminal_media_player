@@ -90,7 +90,8 @@ static unsigned char get_color_number(unsigned char b, unsigned char g, unsigned
 char* TR_render(PyArrayObject* grayscale, PyArrayObject* source_image, 
                 PyArrayObject* intensity_to_grayscale,
                 bool should_paint_back, bool should_paint_fore, 
-                bool boldify, unsigned int terminal_columns) {
+                bool use_all_rgb, bool boldify, unsigned int terminal_columns) {
+    unsigned char b, g, r;
     TR_string* buffer = TR_create_string();
     unsigned int terminal_rows = PyArray_DIMS(grayscale)[0];
     unsigned int actual_terminal_columns = PyArray_DIMS(grayscale)[1];
@@ -109,18 +110,41 @@ char* TR_render(PyArrayObject* grayscale, PyArrayObject* source_image,
             size_t index;
             if (should_paint_back || should_paint_fore) {
                 unsigned char* color = (unsigned char*)PyArray_GETPTR2(source_image, i, j);
-                index = (((size_t)color[0]) << 16) | 
-                               (((size_t)color[1]) << 8) | ((size_t)color[2]);
+                b = color[0];
+                g = color[1];
+                r = color[2];
+                index = (((size_t)b) << 16) | (((size_t)g) << 8) | ((size_t)r);
             }
-            if (should_paint_back) {
-                TR_append_cstring(buffer, "\033[48;5;");
-                TR_append_number(buffer, (int)BGR_to_8bit[index]);
-                TR_append_character(buffer, 'm');
-            }
-            if (should_paint_fore) {
-                TR_append_cstring(buffer, "\033[38;5;");
-                TR_append_number(buffer, (int)BGR_to_8bit[index]);
-                TR_append_character(buffer, 'm');
+            if (use_all_rgb) {
+                if (should_paint_back) {
+                    TR_append_cstring(buffer, "\033[48;2;");
+                    TR_append_number(buffer, r);
+                    TR_append_character(buffer, ';');
+                    TR_append_number(buffer, g);
+                    TR_append_character(buffer, ';');
+                    TR_append_number(buffer, b);
+                    TR_append_character(buffer, 'm');
+                }
+                if (should_paint_fore) {
+                    TR_append_cstring(buffer, "\033[38;2;");
+                    TR_append_number(buffer, r);
+                    TR_append_character(buffer, ';');
+                    TR_append_number(buffer, g);
+                    TR_append_character(buffer, ';');
+                    TR_append_number(buffer, b);
+                    TR_append_character(buffer, 'm');
+                }
+            } else {        
+                if (should_paint_back) {
+                    TR_append_cstring(buffer, "\033[48;5;");
+                    TR_append_number(buffer, (int)BGR_to_8bit[index]);
+                    TR_append_character(buffer, 'm');
+                }
+                if (should_paint_fore) {
+                    TR_append_cstring(buffer, "\033[38;5;");
+                    TR_append_number(buffer, (int)BGR_to_8bit[index]);
+                    TR_append_character(buffer, 'm');
+                }
             }
             unsigned char intensity = ((unsigned char*)PyArray_GETPTR2(grayscale, i, j))[0];
             char ascii = ((char*)PyArray_GETPTR1(intensity_to_grayscale, intensity))[0];

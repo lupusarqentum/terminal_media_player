@@ -52,9 +52,10 @@ class Configuration:
         try:
             character_aspect_ratio = data["character_aspect_ratio"]
             ascii_characters_grayscale = data["ascii_characters_grayscale"]
-            colorful_background_enabled = data["colorful_background_enabled"]
-            colorful_charset_enabled = data["colorful_charset_enabled"]
-            audio_enabled = data["audio_enabled"]
+            paint_background = data["paint_background"]
+            paint_foreground = data["paint_foreground"]
+            use_all_rgb_colors = data["use_all_rgb_colors"]
+            audio_enabled = data["enable_audio"]
             boldify = data["boldify"]
         except KeyError:
             print_error("Failed to apply config because some value is missing")
@@ -62,8 +63,9 @@ class Configuration:
 
         if not ((self._is_character_aspect_ratio(character_aspect_ratio)) and
                 (self._is_ascii_grayscale(ascii_characters_grayscale)) and
-                (type(colorful_background_enabled) is bool) and
-                (type(colorful_charset_enabled) is bool) and
+                (type(paint_background) is bool) and
+                (type(paint_foreground) is bool) and
+                (type(use_all_rgb_colors) is bool) and
                 (type(audio_enabled) is bool) and
                 (type(boldify) is bool)):
             print_error("Failed to apply config because of invalid values")
@@ -71,8 +73,9 @@ class Configuration:
 
         self._character_aspect_ratio = character_aspect_ratio
         self._ascii_characters_grayscale = ascii_characters_grayscale
-        self._colorful_background_enabled = colorful_background_enabled
-        self._colorful_charset_enabled = colorful_charset_enabled
+        self._paint_background = paint_background
+        self._paint_foreground = paint_foreground
+        self._use_all_rgb_colors = use_all_rgb_colors
         self._audio_enabled = audio_enabled
         self._boldify = boldify
 
@@ -95,18 +98,22 @@ class Configuration:
             ordered from lightest to darkest."""
         return self._ascii_characters_grayscale
 
-    def get_colorful_background_enabled(self) -> bool:
-        """Returns True if background of characters should be painted."""
-        return self._colorful_background_enabled
+    def should_paint_background(self) -> bool:
+        """Returns True if background should be painted."""
+        return self._paint_background
 
-    def get_colorful_charset_enabled(self) -> bool:
+    def should_paint_foreground(self) -> bool:
         """Returns True if characters should be painted."""
-        return self._colorful_charset_enabled
+        return self._paint_foreground
 
-    def get_audio_enabled(self) -> bool:
+    def use_all_rgb_colors(self) -> bool:
+        """Returns True if 24-bit colors should be used."""
+        return self._use_all_rgb_colors
+
+    def audio_enabled(self) -> bool:
         """Returns True if audio should be played."""
         return self._audio_enabled
 
-    def get_boldify(self) -> bool:
+    def should_boldify(self) -> bool:
         """Returns True if characters should be printed bold."""
         return self._boldify
