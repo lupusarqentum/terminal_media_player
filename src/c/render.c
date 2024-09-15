@@ -87,11 +87,9 @@ static int get_color_number(unsigned char b, unsigned char g, unsigned char r) {
 
 char* TR_render(PyArrayObject* ascii_art, PyArrayObject* source_image, 
                     bool should_paint_back, bool should_paint_fore, 
-                    bool boldify, unsigned char back_color_offset, 
-                    unsigned char fore_color_offset, unsigned int terminal_columns) {
+                    bool boldify, unsigned int terminal_columns) {
     TR_string* buffer = TR_create_string();
     unsigned char b, g, r;
-    unsigned char b_, g_, r_;
     int color_number;
     unsigned int terminal_rows = PyArray_DIMS(ascii_art)[0];
     unsigned int actual_terminal_columns = PyArray_DIMS(ascii_art)[1];
@@ -116,19 +114,13 @@ char* TR_render(PyArrayObject* ascii_art, PyArrayObject* source_image,
                 r = color[2];
             }
             if (should_paint_back) {
-                b_ = b + back_color_offset;
-                g_ = g + back_color_offset;
-                r_ = r + back_color_offset;
-                color_number = get_color_number(b_, g_, r_);
+                color_number = get_color_number(b, g, r);
                 TR_append_cstring(buffer, "\033[48;5;");
                 TR_append_number(buffer, color_number);
                 TR_append_character(buffer, 'm');
             }
             if (should_paint_fore) {
-                b_ = b + fore_color_offset;
-                g_ = g + fore_color_offset;
-                r_ = r + fore_color_offset;
-                color_number = get_color_number(b_, g_, r_);
+                color_number = get_color_number(b, g, r);
                 TR_append_cstring(buffer, "\033[38;5;");
                 TR_append_number(buffer, color_number);
                 TR_append_character(buffer, 'm');

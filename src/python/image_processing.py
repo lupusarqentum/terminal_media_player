@@ -52,29 +52,22 @@ class ImageRenderer:
             The string might be immediately printed or kept.
         """
         character_aspect_ratio = self._config.get_character_aspect_ratio()
-        polarization_level = self._config.get_polarization_level()
         ascii_grayscale = self._config.get_ascii_characters_grayscale()
         boldify = self._config.get_boldify()
-        source_shape = image.shape
-
         paint_background = self._config.get_colorful_background_enabled()
         paint_foreground = self._config.get_colorful_charset_enabled()
-        boldify_foreground = self._config.get_boldify()
-        background_color_offset = self._config.get_background_color_offset()
-        foreground_color_offset = self._config.get_charset_color_offset()
 
+        source_shape = image.shape
         new_size = find_ASCII_image_size(source_shape[0], source_shape[1],
                                          terminal_rows, terminal_columns,
                                          character_aspect_ratio)
         resized_image = cv2.resize(image, new_size)
         grayscale = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
-        polarized_grayscale = polarize_grayscale(grayscale, polarization_level)
-        ascii_image = asciify_grayscale(polarized_grayscale, ascii_grayscale)
+        ascii_image = asciify_grayscale(grayscale, ascii_grayscale)
 
         return tr.render(ascii_image, resized_image, paint_background,
-                         paint_foreground, boldify_foreground,
-                         background_color_offset,
-                         foreground_color_offset, terminal_columns)
+                         paint_foreground, boldify,
+                         terminal_columns)
 
 
 def find_ASCII_image_size(image_height: int, image_width: int,
@@ -117,22 +110,3 @@ def asciify_grayscale(grayscale: numpy.ndarray,
         return ascii_grayscale[pos]
     vectorized = numpy.vectorize(asciify_pixel)
     return vectorized(grayscale)
-
-
-def polarize_grayscale(grayscale: numpy.ndarray,
-                       polarization_level: float) -> numpy.ndarray:
-    """Pushes dark areas of an image darker and light areas lighter.
-
-    Parameters:
-        grayscale: A matrix of integers from 0 to 255 (gray intensity).
-        polarization_level: A float number from 0.0 to 1.0
-            controlling how aggressively polarization should be performed.
-            For example, 0.0 value means nothing will happen at all,
-            while 1.0 value means very aggressive polarization.
-    """
-    if polarization_level == 0.0:
-        return grayscale
-    average_intensity = numpy.average(grayscale)
-    multiplier = 127 / average_intensity * polarization_level
-    return cv2.addWeighted(grayscale, multiplier,
-                           grayscale, 1.0 - polarization_level, 0.0)

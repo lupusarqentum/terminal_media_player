@@ -25,7 +25,8 @@ import cv2
 from src.python.configuration import Configuration
 from src.python.image_processing import ImageRenderer
 from src.python.utils import (print_error, print_warn,
-                       get_terminal_size, MediaTypes, recognize_media_type)
+                              get_terminal_size, MediaTypes,
+                              recognize_media_type)
 
 
 def watch_image(target_file_path: str, config: Configuration,
@@ -51,7 +52,8 @@ def watch_video(target_file_path: str, config: Configuration,
     while (cap.isOpened()):
         ret, frame = cap.read()
         if ret is True:
-            #TODO: if terminal size modified, do os.system("clear") to prevent garbage
+            # TODO: if terminal size modified, do os.system("clear")
+            # to prevent garbage
             terminal_rows, terminal_columns = get_terminal_size()
             terminal_rows -= 2
             rendered_frame = image_renderer.render(frame, terminal_rows,
@@ -99,4 +101,3 @@ Assuming " + target_file_path)
         watch_audio(target_file_path, config)
     elif media_type == MediaTypes.Video:
         watch_video(target_file_path, config, terminal_rows, terminal_columns)
-

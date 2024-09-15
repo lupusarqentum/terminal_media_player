@@ -32,7 +32,6 @@
 
 char* TR_render(PyArrayObject* ascii_art, PyArrayObject* source_image, 
                 bool should_paint_back, bool should_paint_fore, 
-                bool boldify, unsigned char back_color_offset, 
-                unsigned char fore_color_offset, unsigned int terminal_columns);
+                bool boldify, unsigned int terminal_columns);
 
 #endif

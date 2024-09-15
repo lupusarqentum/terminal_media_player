@@ -52,46 +52,34 @@ class Configuration:
         try:
             character_aspect_ratio = data["character_aspect_ratio"]
             ascii_characters_grayscale = data["ascii_characters_grayscale"]
-            polarization_level = data["polarization_level"]
             colorful_background_enabled = data["colorful_background_enabled"]
             colorful_charset_enabled = data["colorful_charset_enabled"]
             audio_enabled = data["audio_enabled"]
             boldify = data["boldify"]
-            background_color_offset = data["background_color_offset"]
-            charset_color_offset = data["charset_color_offset"]
         except KeyError:
             print_error("Failed to apply config because some value is missing")
             return False
 
         if not ((self._is_character_aspect_ratio(character_aspect_ratio)) and
                 (self._is_ascii_grayscale(ascii_characters_grayscale)) and
-                (self._is_polarization_level_value(polarization_level)) and
                 (type(colorful_background_enabled) is bool) and
                 (type(colorful_charset_enabled) is bool) and
                 (type(audio_enabled) is bool) and
-                (type(boldify) is bool) and
-                (background_color_offset in range(256)) and
-                (charset_color_offset in range(256))):
+                (type(boldify) is bool)):
             print_error("Failed to apply config because of invalid values")
             return False
 
         self._character_aspect_ratio = character_aspect_ratio
         self._ascii_characters_grayscale = ascii_characters_grayscale
-        self._polarization_level = polarization_level
         self._colorful_background_enabled = colorful_background_enabled
         self._colorful_charset_enabled = colorful_charset_enabled
         self._audio_enabled = audio_enabled
         self._boldify = boldify
-        self._background_color_offset = background_color_offset
-        self._charset_color_offset = charset_color_offset
 
         return True
 
     def _is_character_aspect_ratio(self, value) -> bool:
         return type(value) is float and value > 0
-
-    def _is_polarization_level_value(self, value) -> bool:
-        return type(value) is float and -0.001 <= value <= 1.001
 
     def _is_ascii_grayscale(self, value) -> bool:
         return type(value) is str and all(char in printable for char in value)
@@ -109,10 +97,6 @@ class Configuration:
             ordered from lightest to darkest."""
         return self._ascii_characters_grayscale
 
-    def get_polarization_level(self) -> float:
-        """Returns intensity polarization level."""
-        return self._polarization_level
-
     def get_colorful_background_enabled(self) -> bool:
         """Returns True if background of characters should be painted."""
         return self._colorful_background_enabled
@@ -128,11 +112,3 @@ class Configuration:
     def get_boldify(self) -> bool:
         """Returns True if characters should be printed bold."""
         return self._boldify
-
-    def get_background_color_offset(self) -> int:
-        """Returns characters' backgrounds' color channels offset."""
-        return self._background_color_offset
-
-    def get_charset_color_offset(self) -> int:
-        """Returns characters' color channels offset."""
-        return self._charset_color_offset
