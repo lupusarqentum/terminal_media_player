@@ -23,9 +23,9 @@ import cv2
 
 from src.python.configuration import Configuration
 from src.python.image_processing import ImageRenderer
-from src.python.utils import (print_error, print_warn,
-                              get_terminal_size, clear_terminal,
-                              MediaTypes, recognize_media_type)
+from src.python.terminal_utils import (print_error, print_warn,
+                                       get_terminal_size, clear_terminal)
+from src.python.media_types import MediaTypes, recognize_media_type
 
 
 def watch_image(target_file_path: str, config: Configuration,

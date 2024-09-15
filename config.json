@@ -1,9 +1,9 @@
 {
 	"character_aspect_ratio": 2.25,
 	"ascii_characters_grayscale": " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
-	"paint_background": true,
+	"paint_background": false,
 	"paint_foreground": true,
-	"use_all_rgb_colors": false,
+	"use_all_rgb_colors": true,
 	"enable_audio": true,
 	"boldify": true
 }

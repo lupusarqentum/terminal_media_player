@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 
-PYTHON_INTERPRETER_INCLUDE_DIR=/usr/include/python3.12
-NUMPY_INCLUDE_DIR=venv/lib/python3.12/site-packages/numpy/_core/include
-INSTALLATION_DIR=venv/lib/python3.12/site-packages
+source dirs.txt
 
-PYTHON_INTERPRETER_INCLUDE_DIR=$(realpath $PYTHON_INTERPRETER_INCLUDE_DIR)
-NUMPY_INCLUDE_DIR=$(realpath $NUMPY_INCLUDE_DIR)
-INSTALLATION_DIR=$(realpath $INSTALLATION_DIR)
+PYTHON_INTERPRETER_INCLUDE_DIR=$(realpath "$PYTHON_INTERPRETER_INCLUDE_DIR")
+NUMPY_INCLUDE_DIR=$(realpath "$NUMPY_INCLUDE_DIR")
+INSTALLATION_DIR=$(realpath "$INSTALLATION_DIR")
 
-cd src/c
+cd src/c || exit
 
 echo Compiling extension module...
 
