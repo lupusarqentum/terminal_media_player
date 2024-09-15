@@ -103,5 +103,6 @@ static struct PyModuleDef terminalrenderermodule = {
 
 PyMODINIT_FUNC PyInit_terminalrenderer(void) {
     import_array();
+    TR_init_color_tables();
     return PyModule_Create(&terminalrenderermodule);
 }

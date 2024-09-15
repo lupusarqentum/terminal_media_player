@@ -35,4 +35,8 @@ char* TR_render(PyArrayObject* grayscale, PyArrayObject* source_image,
                 bool should_paint_back, bool should_paint_fore, 
                 bool boldify, unsigned int terminal_columns);
 
+/* This function should be called at least once before TR_render() call. */
+
+void TR_init_color_tables(void);
+
 #endif
