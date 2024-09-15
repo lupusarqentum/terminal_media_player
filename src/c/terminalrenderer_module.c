@@ -25,55 +25,63 @@
 
 /**
  * Parameters list:
- *     ascii_art
+ *     grayscale
  *     source_image
+ *     intensity_to_grayscale
  *     paint_background?
  *     paint_foreground?
  *     boldify_foreground?
- *     background_color_offset
- *     foreground_color_offset
  *     terminal_columns
  */
 
 static PyObject* terminalrenderer_render(PyObject* self, PyObject* args) {
-    PyArrayObject* ascii_art;
+    PyArrayObject* grayscale;
     PyArrayObject* source_image;
+    PyArrayObject* intensity_to_grayscale;
     bool should_paint_back;
     bool should_paint_fore;
     bool boldify;
     unsigned int terminal_columns;
-    if (!PyArg_ParseTuple(args, "O!O!pppI", 
-                          &PyArray_Type, &ascii_art,
+    if (!PyArg_ParseTuple(args, "O!O!O!pppI", 
+                          &PyArray_Type, &grayscale,
                           &PyArray_Type, &source_image,
+                          &PyArray_Type, &intensity_to_grayscale,
                           &should_paint_back, &should_paint_fore,
                           &boldify, &terminal_columns)) {
         return NULL;
     }
     
-    int ascii_art_ndims = PyArray_NDIM(ascii_art);
+    int grayscale_art_ndims = PyArray_NDIM(grayscale);
     int source_image_ndims = PyArray_NDIM(source_image);
-    npy_intp* ascii_art_dims = PyArray_DIMS(ascii_art);
+    int intensity_to_grayscale_ndims = PyArray_NDIM(intensity_to_grayscale);
+    npy_intp* grayscale_dims = PyArray_DIMS(grayscale);
     npy_intp* source_image_dims = PyArray_DIMS(source_image);
+    npy_intp* intensity_to_grayscale_dims = PyArray_DIMS(intensity_to_grayscale);
     
-    if (ascii_art_ndims != 2 || source_image_ndims != 3 || 
-        ascii_art_dims[0] != source_image_dims[0] || 
-        ascii_art_dims[1] != source_image_dims[1] || 
+    if (intensity_to_grayscale_ndims != 1 || intensity_to_grayscale_dims[0] != 256 || PyArray_TYPE(intensity_to_grayscale) != NPY_UNICODE) {
+        PyErr_SetString(PyExc_ValueError, "Intensity to ASCII translation array is invalid");
+        return NULL;
+    }
+    if (grayscale_art_ndims != 2 || source_image_ndims != 3 || 
+        grayscale_dims[0] != source_image_dims[0] || 
+        grayscale_dims[1] != source_image_dims[1] || 
         source_image_dims[2] != 3) {
-        PyErr_SetString(PyExc_ValueError, "ASCII art shape or source image shape are invalid or mismatch");
+        PyErr_SetString(PyExc_ValueError, "Grayscale image shape or source image shape are invalid or mismatch");
         return NULL;
     }
     if (terminal_columns < source_image_dims[1]) {
         PyErr_SetString(PyExc_ValueError, "Terminal doesn't have enough columns to display an image");
         return NULL;
     }
-    if (PyArray_TYPE(ascii_art) != NPY_UNICODE || 
+    if (PyArray_TYPE(grayscale) != NPY_UBYTE || 
         PyArray_TYPE(source_image) != NPY_UBYTE) {
-        PyErr_SetString(PyExc_TypeError, "Expected that an element of ascii_art is of Unicode type and an element of source_image is uint8");
+        PyErr_SetString(PyExc_TypeError, "Expected that elements of grayscale image and source image are uint8");
         return NULL;
     }
     
-    char* result = TR_render(ascii_art, source_image, should_paint_back, 
-                          should_paint_fore, boldify, terminal_columns);
+    char* result = TR_render(grayscale, source_image, intensity_to_grayscale,
+                             should_paint_back, should_paint_fore, boldify, 
+                             terminal_columns);
     PyObject* pyResult = PyUnicode_FromString(result);
     PyMem_RawFree(result);
     return pyResult;

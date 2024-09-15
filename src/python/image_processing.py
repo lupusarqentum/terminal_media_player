@@ -33,7 +33,18 @@ class ImageRenderer:
 
     def __init__(self, config: Configuration) -> None:
         """Initializes image renderer with configuration object."""
-        self._config = config
+        self._character_aspect_ratio = config.get_character_aspect_ratio()
+        self._boldify = config.get_boldify()
+        self._paint_background = config.get_colorful_background_enabled()
+        self._paint_foreground = config.get_colorful_charset_enabled()
+        ascii_grayscale = config.get_ascii_characters_grayscale()
+        self._generate_intensity_to_ascii_table(ascii_grayscale)
+
+    def _generate_intensity_to_ascii_table(self, grayscale: str) -> None:
+        table = [grayscale[min(round(intensity / 255 * len(grayscale)),
+                                     len(grayscale) - 1)]
+                                     for intensity in range(256)]
+        self._intensity_to_ascii = numpy.array(table)
 
     def render(self, image: numpy.ndarray, terminal_rows: int,
                terminal_columns: int) -> None:
@@ -51,23 +62,20 @@ class ImageRenderer:
             A string that is a result of rendering.
             The string might be immediately printed or kept.
         """
-        character_aspect_ratio = self._config.get_character_aspect_ratio()
-        ascii_grayscale = self._config.get_ascii_characters_grayscale()
-        boldify = self._config.get_boldify()
-        paint_background = self._config.get_colorful_background_enabled()
-        paint_foreground = self._config.get_colorful_charset_enabled()
-
         source_shape = image.shape
         new_size = find_ASCII_image_size(source_shape[0], source_shape[1],
                                          terminal_rows, terminal_columns,
-                                         character_aspect_ratio)
+                                         self._character_aspect_ratio)
         resized_image = cv2.resize(image, new_size)
         grayscale = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
-        ascii_image = asciify_grayscale(grayscale, ascii_grayscale)
-
-        return tr.render(ascii_image, resized_image, paint_background,
-                         paint_foreground, boldify,
-                         terminal_columns)
+        rendered_frame = tr.render(grayscale,
+                                   resized_image,
+                                   self._intensity_to_ascii,
+                                   self._paint_background,
+                                   self._paint_foreground,
+                                   self._boldify,
+                                   terminal_columns)
+        return rendered_frame
 
 
 def find_ASCII_image_size(image_height: int, image_width: int,
@@ -98,15 +106,3 @@ def find_ASCII_image_size(image_height: int, image_width: int,
     new_columns = round(new_columns)
     new_rows = round(new_rows)
     return (new_columns, new_rows)
-
-
-def asciify_grayscale(grayscale: numpy.ndarray,
-                      ascii_grayscale: str) -> numpy.ndarray:
-    """Converts a grayscale of an image to ASCII image."""
-    grayscale_len = len(ascii_grayscale)
-
-    def asciify_pixel(intensity):
-        pos = min(round(intensity / 255 * grayscale_len), grayscale_len - 1)
-        return ascii_grayscale[pos]
-    vectorized = numpy.vectorize(asciify_pixel)
-    return vectorized(grayscale)

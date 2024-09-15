@@ -30,7 +30,8 @@
  *     freed with Py_MemRawFree(void*).
  */
 
-char* TR_render(PyArrayObject* ascii_art, PyArrayObject* source_image, 
+char* TR_render(PyArrayObject* grayscale, PyArrayObject* source_image, 
+                PyArrayObject* intensity_to_grayscale,
                 bool should_paint_back, bool should_paint_fore, 
                 bool boldify, unsigned int terminal_columns);
 

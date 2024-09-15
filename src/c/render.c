@@ -85,14 +85,15 @@ static int get_color_number(unsigned char b, unsigned char g, unsigned char r) {
     return 16 + 36 * shrink_channel(r) + 6 * shrink_channel(g) + shrink_channel(b);
 }
 
-char* TR_render(PyArrayObject* ascii_art, PyArrayObject* source_image, 
-                    bool should_paint_back, bool should_paint_fore, 
-                    bool boldify, unsigned int terminal_columns) {
+char* TR_render(PyArrayObject* grayscale, PyArrayObject* source_image, 
+                PyArrayObject* intensity_to_grayscale,
+                bool should_paint_back, bool should_paint_fore, 
+                bool boldify, unsigned int terminal_columns) {
     TR_string* buffer = TR_create_string();
     unsigned char b, g, r;
     int color_number;
-    unsigned int terminal_rows = PyArray_DIMS(ascii_art)[0];
-    unsigned int actual_terminal_columns = PyArray_DIMS(ascii_art)[1];
+    unsigned int terminal_rows = PyArray_DIMS(grayscale)[0];
+    unsigned int actual_terminal_columns = PyArray_DIMS(grayscale)[1];
     unsigned int offset_length = (terminal_columns - actual_terminal_columns) / 2;
     char* offset = PyMem_RawMalloc(offset_length + 1);
     memset(offset, ' ', offset_length);
@@ -101,8 +102,6 @@ char* TR_render(PyArrayObject* ascii_art, PyArrayObject* source_image,
     if (boldify) {
         TR_append_cstring(buffer, "\033[1m");
     }
-    
-    /* TODO: reduce number of memory allocations by precalculating optimal initial capacity */
     
     for (unsigned int i = 0; i < terminal_rows; i++) {
         TR_append_cstring(buffer, offset);
@@ -125,7 +124,9 @@ char* TR_render(PyArrayObject* ascii_art, PyArrayObject* source_image,
                 TR_append_number(buffer, color_number);
                 TR_append_character(buffer, 'm');
             }
-            TR_append_character(buffer, ((char*)(PyArray_GETPTR2(ascii_art, i, j)))[0]);
+            unsigned char intensity = ((unsigned char*)PyArray_GETPTR2(grayscale, i, j))[0];
+            char ascii = ((char*)PyArray_GETPTR1(intensity_to_grayscale, intensity))[0];
+            TR_append_character(buffer, ascii);
         }
         if (should_paint_back) {
             TR_append_cstring(buffer, "\033[49m");
