@@ -31,7 +31,7 @@ typedef struct {
     size_t capacity;
 } TR_string;
 
-TR_string* TR_create_string();
+TR_string* TR_create_string(void);
 
 void TR_append_character(TR_string* obj, char c);
 

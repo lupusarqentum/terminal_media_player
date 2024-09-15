@@ -24,7 +24,7 @@
 #include <Python.h>
 #include "string.h"
 
-TR_string* TR_create_string() {
+TR_string* TR_create_string(void) {
     TR_string* str = PyMem_RawMalloc(sizeof(TR_string));
     str->data = PyMem_RawMalloc(sizeof(char) * TR_STRING_INITIAL_CAPACITY);
     str->capacity = TR_STRING_INITIAL_CAPACITY;
@@ -35,7 +35,10 @@ TR_string* TR_create_string() {
 void TR_append_character(TR_string* obj, char c) {
     if (obj->length == obj->capacity) {
         obj->capacity *= 2;
-        PyMem_RawRealloc(obj->data, obj->capacity);
+        char* ndata = PyMem_RawMalloc(obj->capacity);
+        memcpy(ndata, obj->data, obj->length);
+        PyMem_RawFree(obj->data);
+        obj->data = ndata;
     }
     obj->data[obj->length++] = c;
 }
@@ -50,15 +53,9 @@ void TR_append_cstring(TR_string* obj, char* s) {
 /* number must contain no more than three decimal digits */
 
 void TR_append_number(TR_string* obj, int number) {
-    if (100 <= number && number <= 999) {
-        TR_append_character(obj, number / 100 + '0');
-        number %= 100;
-    }
-    if (10 <= number && number <= 99) {
-        TR_append_character(obj, number / 10 + '0');
-        number %= 10;
-    }
-    TR_append_character(obj, number + '0');
+    char buffer[4];
+    sprintf(buffer, "%d", number);
+    TR_append_cstring(obj, buffer);
 }
 
 /* Shrinks string's capacity to fit length, 
