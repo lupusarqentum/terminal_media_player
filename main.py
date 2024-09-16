@@ -23,6 +23,7 @@ import cv2
 
 from src.python.configuration import Configuration, get_config_location
 from src.python.image_processing import ImageRenderer
+from src.python.framerate_keeper import FramerateKeeper
 from src.python.terminal_utils import (print_error, print_warn,
                                        get_terminal_size, clear_terminal)
 from src.python.media_types import MediaTypes, recognize_media_type
@@ -50,37 +51,33 @@ def watch_video(target_file_path: str, config: Configuration) -> None:
     """Reads video, renders it frame-by-frame and prints to stdout."""
     image_renderer = ImageRenderer(config)
     cap = cv2.VideoCapture(target_file_path)
-    clear_terminal()
     terminal_rows, terminal_columns = get_terminal_size()
     terminal_rows -= 2
-    frame_index = 0
+    clear_terminal()
+    framerate_keeper = FramerateKeeper(25)
+    framerate_keeper.start()
     while (cap.isOpened()):
         ret, frame = cap.read()
-        if ret is True:
-            frame_index += 1
-            if frame_index % 30 == 0:
-                frame_index = 0
-                # Because fetching terminal size is very expensive,
+        if not ret:
+            break
+        if not framerate_keeper.should_drop_frame():
+            if framerate_keeper.get_frames_processed_count() % 30 == 0:
+                # Because fetching terminal size is expensive,
                 # it's done only once in 30 frames.
-                # That way, a user will need wait only around 0.5 seconds
-                # before video become adequate again after resizing.'
                 terminal_rows_now, terminal_columns_now = get_terminal_size()
                 terminal_rows_now -= 2
-                if (terminal_rows_now != terminal_rows or
-                   terminal_columns_now != terminal_columns):
+                # Clearing every frame introduces flickering.
+                # So clearing is done only if size has changed.
+                # Otherwise, garbage will might appear.
+                if terminal_columns_now != terminal_columns or \
+                   terminal_rows_now != terminal_rows:
                     terminal_rows = terminal_rows_now
                     terminal_columns = terminal_columns_now
-                    # Without clearing the terminal,
-                    # garbage will appear after video resizing.
                     clear_terminal()
-            if terminal_rows >= 6 and terminal_columns >= 12:
-                rendered_frame = image_renderer.render(frame, terminal_rows,
-                                                       terminal_columns)
-                print("\033[H" + rendered_frame)
-            else:
-                print("ENLARGE TERM")
-        else:
-            break
+            rendered_frame = image_renderer.render(frame, terminal_rows,
+                                                   terminal_columns)
+            print("\033[H" + rendered_frame)
+        framerate_keeper.on_frame_processed(True)
 
 
 if __name__ == "__main__":

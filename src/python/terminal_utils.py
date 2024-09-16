@@ -27,7 +27,7 @@ def get_terminal_size() -> tuple:
 
 def clear_terminal() -> None:
     """Clears the terminal."""
-    os.system("clear")
+    print("\033[2J")
 
 
 def print_error(message: str) -> None:

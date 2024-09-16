@@ -50,7 +50,7 @@ class Configuration:
             os.makedirs(os.path.dirname(config_file_path), exist_ok=True)
             with open(config_file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
-        except:
+        except OSError:
             print_error("Failed to save config file at " + config_file_path)
 
     def try_apply_json(self, config_file_path: str) -> bool:
