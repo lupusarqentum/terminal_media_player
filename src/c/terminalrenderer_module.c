@@ -26,12 +26,13 @@
 /**
  * Parameters list:
  *     grayscale
- *     source_image
+ *     source image
  *     intensity_to_grayscale
- *     paint_background?
- *     paint_foreground?
- *     boldify_foreground?
- *     terminal_columns
+ *     should paint background?
+ *     should paint foreground?
+ *     should use full RGB space?
+ *     should boldify foreground?
+ *     terminal columns
  */
 
 static PyObject* terminalrenderer_render(PyObject* self, PyObject* args) {
@@ -89,9 +90,28 @@ static PyObject* terminalrenderer_render(PyObject* self, PyObject* args) {
 }
 
 static PyMethodDef TerminalRendererMethods[] = {
-    {"render", terminalrenderer_render, METH_VARARGS, 
-    "Paints an ASCII art and returns result as a str object.\n\nReceives an ASCII art and its colorful source image, paints characters\nand background if needed, and returns the result as a str object\nthat can be immediately printed to stdout. Painting and, optionally,\nmaking characters bold, is done via ANSI escape sequences. Only 240 colors\nof 8-bit terminal colors are used.\n\nParameters:\n\tascii_art: 2D numpy.ndarray of ASCII characters.\n\tsource_image: Colorful image that was used to produce ascii_art.\n\t\tIf source_image's width and height are x and y,\n\t\tascii_art's width and height must be x and y.\n\tpaint_background: True, if should paint background, False, otherwise.\n\tpaint_foreground: True, if should paint characters, False otherwise.\n\tboldify_foreground: True, if should make characters bold, False otherwise.\n\tbackground_color_offset: Unsigned 8-bit integer that will be addedn\n\t\tto all color channel of source_image\n\t\tbefore determining background color.\n\tforeground_color_offset: Same thing applied to characters.\n\tterminal_columns: Number of columns in a terminal in which a\n\t\tresulting image will be printed."},
-    {NULL, NULL, 0, NULL} /* Sentinel */
+    {"render", terminalrenderer_render, METH_VARARGS,
+    "Generates ASCII art and returns it as a str object.\n\n"
+    "Returned value can be immediately printed to stdout to display generated\n"
+    "art. Optional painting and making characters bold is done via ANSI escape\n"
+    "sequences. If characters are painted, at least 240 colors from ANSI escape\n"
+    "sequences are used. Optionally might use full RGB space.\n\n"
+    "Parameters:\n"
+    "\tgrayscale: 2D numpy.ndarray. grayscaled source image of uint8.\n"
+    "\tsource_image: 3D numpy.ndarray. Its shape must be (x, y, 3)\n"
+    "\t\twhere (x, y) is the shape of grayscale.\n"
+    "\tintensity_to_grayscale: 1D numpy.ndarray. Must contain 256 ASCII characters.\n"
+    "\tshould_paint_background\n\tshould_paint_foreground\n"
+    "\tuse_all_rgb: whether should use all RGB colors or just 240.\n"
+    "\t\tMatters only if either should_paint_background or\n"
+    "\t\tshould_paint_foreground is set.\n"
+    "\tboldify: whether or not should make characters bold.\n"
+    "\tterminal_columns: Number of columns in the terminal.\n"
+    "\t\tMust not be less than height of source image.\n"
+    "\t\tHeight of the generated art will match the size of source image.\n"
+    "\t\tThis parameter is used to center generated ASCII art\n"
+    "\t\tby adding spaces-offset to every line.\n"},
+    {NULL, NULL, 0, NULL}
 };
 
 static struct PyModuleDef terminalrenderermodule = {
